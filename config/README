@@ -1,0 +1,60 @@
+Overview
+========
+
+This directory contains a variety of predefined build configurations.
+
+base-config supplies common definitions, and you will likely need to modify it
+to provide a path to the Boost libraries on your system.
+
+
+Config File Requirements
+========================
+
+A config file is a BASH program sourced from scripts/make-benchmarks.  It must
+define the variables CFLAGS and INCLUDE:
+
+  CFLAGS
+      Provides all options passes to the compiler.
+
+  INCLUDE
+      Must provide the -I declaration(s) needed to use the Boost libraries
+      (version 1.48 or later).
+
+
+Sprite Build Options
+====================
+
+There are several Sprite-specific options that may be added to CFLAGS as -D
+options to the compiler.  They are:
+
+  TRACING
+      Traces every step taken during execution.
+
+  SPRITE_GC_MODE
+      Selects the garbage collection mode.  Possible values are:
+          0
+              Use reference counting (default).
+          1
+              Use gargabe collection.
+          2
+              Use crosschecked garbage collection; keep the reference count and
+              assert that it is zero every time a node is reclaimed by the
+              collector.
+
+  TRACEREFS
+      Traces every change to a reference count.
+
+  TRACEALLOC
+      Traces every allocation and deallocation event.
+
+  TRACEGC
+      Traces the operation of the garbage collector.  Possible values are:
+
+          1
+              Print statistics about the collection event every time the
+              collector is run.
+
+          2
+              Trace every mark made during the MARK phase of collection.  Also
+              does everything a value of 1 would do.
+

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function usage {
+  cat >&2 << EOF
+Executes and times benchmark programs.
+
+USAGE
+    run-benchmarks [-s] <benchmark-name> [ ... ]
+
+        -s
+            Output a short summary of the timing results.
+
+        <benchmark-name>
+            The name of the benchmark to run.  The program should already have
+            been built (using make-benchmarks).
+
+EOF
+  exit 1;
+}
+
+# ====== Parse Arguments ======
+
+SHORT_OUTPUT=0
+
+while getopts "s" OPTION
+do
+  case $OPTION in
+    s)
+      SHORT_OUTPUT=1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$#" == "0" ]; then
+  usage
+  exit 1
+fi
+
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+
+for BENCHMARK_NAME in $@
+do
+  EXE=$ROOT/bin/benchmark-$BENCHMARK_NAME
+
+  if [ ! -f $EXE ]; then
+    echo "\"benchmark-$BENCHMARK_NAME\" not found under $ROOT/bin" 1>&2
+    continue
+  fi
+
+  if [[ $SHORT_OUTPUT -ne 0 ]]; then
+    printf "%-20s " $BENCHMARK_NAME
+    \time --format="%E" -- $EXE > /dev/null
+  else
+    echo "------ $BENCHMARK_NAME ------"
+    \time $EXE
+  fi
+done
+

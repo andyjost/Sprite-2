@@ -1,0 +1,52 @@
+Package Contents
+================
+
+The following directories are included in the distribution:
+
+    benchmarks
+        Contains source code for benchmark programs.
+
+    bin
+        Contains executable programs.
+
+    config
+        Contains configuration files to control build settings.
+
+    scripts
+        Contains scripts for building and such.
+
+    sprite
+        Contains Sprite include files.
+
+    src
+        Contains Sprite source files.
+
+
+Running Benchmarks
+==================
+
+Two scripts are used to build and run the benchmarks:
+
+    scripts/make-benchmarks
+        Builds benchmark programs and places them under bin.
+
+    scripts/run-benchmarks
+        Runs benchmark programs and reports timing info.
+
+Examples
+--------
+
+Build and run optimized code with reference counting::
+
+    % scripts/make-benchmarks -c refcnt-opt -q reverse tak
+    % scripts/run-benchmarks -s reverse tak
+    reverse              0:01.81
+    tak                  0:01.07
+
+Build and run optimized code with garbage collection::
+
+    % scripts/make-benchmarks -c gc-opt -q reverse tak
+    % scripts/run-benchmarks -s reverse tak
+    reverse              0:00.80
+    tak                  0:01.20
+

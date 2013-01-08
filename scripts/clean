@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Cleans up build directories and executables.
+
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+rm -rf $ROOT/object_root bin/benchmark-* 2> /dev/null
