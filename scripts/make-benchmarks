@@ -150,6 +150,7 @@ EOF
   
   
   # ====== Install ======
-  cp $EXE $ROOT/bin/
+  mkdir -p $ROOT/bin
+  cp $EXE $ROOT/bin
 
 done
