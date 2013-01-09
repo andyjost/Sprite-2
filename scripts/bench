@@ -1,10 +1,14 @@
 #!/bin/bash
 
 BENCHMARKS="reverse tak"
+CONFIGS="refcnt-opt gc-opt"
 
 function usage {
   cat >&2 << EOF
-Executes all of the benchmark programs (defined as \"$BENCHMARKS\").
+Executes all of the benchmark programs.
+
+The programs are: \"$BENCHMARKS\".
+The configurations are: \"$CONFIGS\".
 
 USAGE
     bench [-M|s]
@@ -12,53 +16,69 @@ USAGE
         -M
             Do not remake the benchmarks (run only).
 
-        -s
-            Output a short summary of the timing results.
+        -l
+            Output a long report of the timing results.
+
+        -q
+            Work silently.
 EOF
   exit 1;
 }
 
-SHORT_OUTPUT=0
+SHORT_FLAG="-s"
 NO_MAKE=0
+QUIET=0
 
-while getopts "Ms" OPTION
+while getopts "Mlq" OPTION
 do
   case $OPTION in
-    s)
-      SHORT_OUTPUT=1
+    l)
+      SHORT_FLAG=""
       ;;
     M)
       NO_MAKE=1
+      ;;
+    q)
+      QUIET=1
       ;;
   esac
 done
 
 shift $(($OPTIND - 1))
-ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
 
 if [ "$#" != "0" ]; then
   usage
   exit 1
 fi
 
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
 cd $ROOT
-LOG=bench.log
-echo -n > bench.log
 
-if [[ $NO_MAKE -eq 0 ]]; then
-  ./scripts/make-benchmarks -c refcnt-opt $BENCHMARKS 2>&1 | tee -a $LOG
-  ./scripts/make-benchmarks -c gc-opt $BENCHMARKS 2>&1 | tee -a $LOG
-  echo
-  echo
+if [[ $QUIET == 1 ]]; then
+  QUIET_OPTION="-q"
+else
+  QUIET_OPTION=""
 fi
 
 
-# refcnt-opt
-echo "------ Config refcnt-opt ------"
-./scripts/install-benchmarks -c refcnt-opt -q $BENCHMARKS
-./scripts/run-benchmarks -s $BENCHMARKS 2>&1 | tee -a $LOG
+# Build.
+if [[ $NO_MAKE == 0 ]]; then
+  for CONFIG in $CONFIGS
+  do
+    ./scripts/make-benchmarks -c $CONFIG $QUIET_OPTION $BENCHMARKS
+  done
 
-# gc-opt
-echo "------ Config gc-opt ------"
-./scripts/install-benchmarks -c gc-opt -q $BENCHMARKS
-./scripts/run-benchmarks -s $BENCHMARKS 2>&1 | tee -a $LOG
+  if [[ $QUIET == 0 ]]; then
+    echo
+    echo
+  fi
+fi
+
+
+# Run.
+for CONFIG in $CONFIGS
+do
+  echo "------ Config $CONFIG ------"
+  ./scripts/install-benchmarks -c $CONFIG -q $BENCHMARKS
+  ./scripts/run-benchmarks $SHORT_FLAG $BENCHMARKS 2>&1
+done

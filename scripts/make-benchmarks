@@ -21,7 +21,7 @@ USAGE
             Work silently.
 
         <benchmark-name>
-            The name of the benchmark to compile.  Must be directory under
+            The name of the benchmark to compile.  Must be a directory under
             benchmarks.
 EOF
   exit 1;
