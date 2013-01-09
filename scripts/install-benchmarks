@@ -1,0 +1,76 @@
+#!/bin/bash
+
+set -e
+
+function usage {
+  cat >&2 << EOF
+Installs benchmark programs by creating links in the bin directory to a
+particular build configuration.
+
+USAGE
+    install-benchmarks [-c <config-name>] [-q] <benchmark-name> [ ... ]
+
+        -c <config-name>
+            The configuration name, which is a file under config.  This is used
+
+        -q
+            Work silently.
+
+        <benchmark-name>
+            The name of the benchmark to compile.  Must be directory under
+            benchmarks, and must have already been built with the specified
+            configuration.
+EOF
+  exit 1;
+}
+
+# ====== Parse Arguments ======
+
+CONFIG_NAME="default"
+QUIET=0
+
+while getopts "c:q" OPTION
+do
+  case $OPTION in
+    c)
+      CONFIG_NAME=$OPTARG
+      ;;
+    q)
+      QUIET=1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$#" == "0" ]; then
+  usage
+  exit 1
+fi
+
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+BIN=$ROOT/bin
+mkdir -p $ROOT/bin
+cd $BIN
+
+for BENCHMARK_NAME in $@
+do
+  if [[ $QUIET -eq 0 ]]; then
+      echo
+      echo "------ Installing benchmark \"$BENCHMARK_NAME\" with config \"$CONFIG_NAME\" ------"
+  fi
+
+  PROGRAM_NAME=benchmark-$BENCHMARK_NAME
+  EXE=../object_root/$BENCHMARK_NAME/$CONFIG_NAME/$PROGRAM_NAME
+
+  if [[ ! -x $EXE ]]; then
+    echo "Executable \"$EXE\" not found (relative to \"`pwd`\")" 1>&2
+  fi
+
+  if [[ -L $PROGRAM_NAME ]]; then
+    rm $PROGRAM_NAME
+  fi
+
+  ln -s $EXE
+
+done

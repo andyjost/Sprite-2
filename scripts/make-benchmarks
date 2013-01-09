@@ -1,15 +1,17 @@
 #!/bin/bash
 
+set -e
+
 function usage {
   cat >&2 << EOF
-Builds a benchmark program.
+Builds benchmark programs.
 
 USAGE
     make-benchmarks [-c <config-name>] [-p|q] <benchmark-name> [ ... ]
 
         -c <config-name>
-            The name of a file under config, which is used to configure the
-            build.  Defaults to "default".
+            The configuration name, which is a file under config.  This is used
+            to configure the build.  Defaults to "default".
 
         -p
             Indicates to compile with preprocessed source.  This can be
@@ -21,8 +23,6 @@ USAGE
         <benchmark-name>
             The name of the benchmark to compile.  Must be directory under
             benchmarks.
-
-The executable file will be placed under bin.
 EOF
   exit 1;
 }
@@ -30,14 +30,14 @@ EOF
 # ====== Parse Arguments ======
 
 BUILD="build"
-CONFIG_FILE_NAME="default"
+CONFIG_NAME="default"
 QUIET=0
 
 while getopts "c:pq" OPTION
 do
   case $OPTION in
     c)
-      CONFIG_FILE_NAME=$OPTARG
+      CONFIG_NAME=$OPTARG
       ;;
     p)
       BUILD="build-pp"
@@ -60,12 +60,12 @@ fi
 ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
 
 # Import the build configuration (sets CFLAGS and INCLUDE).
-if [ ! -f $ROOT/config/$CONFIG_FILE_NAME ]; then
-  echo "Config file \"$CONFIG_FILE_NAME\" not found under $ROOT/config" >&2
+if [ ! -f $ROOT/config/$CONFIG_NAME ]; then
+  echo "Config file \"$CONFIG_NAME\" not found under $ROOT/config" >&2
   exit 1
 fi
 
-. $ROOT/config/$CONFIG_FILE_NAME
+. $ROOT/config/$CONFIG_NAME
 
 
 for BENCHMARK_NAME in $@
@@ -73,7 +73,7 @@ do
 
   if [[ $QUIET -eq 0 ]]; then
       echo
-      echo "------ Building benchmark \"$BENCHMARK_NAME\" ------"
+      echo "------ Building benchmark \"$BENCHMARK_NAME\" with config \"$CONFIG_NAME\" ------"
   fi
   
   # ====== Get the Benchmark ======
@@ -87,9 +87,9 @@ do
   OBJECT_ROOT="$ROOT/object_root"
   mkdir -p $OBJECT_ROOT
   
-  OUTDIR=$OBJECT_ROOT/$BENCHMARK_NAME
+  OUTDIR=$OBJECT_ROOT/$BENCHMARK_NAME/$CONFIG_NAME
   rm -rf $OUTDIR 2> /dev/null
-  mkdir $OUTDIR
+  mkdir -p $OUTDIR
   
   # Generate the main source file.
   cat > $OUTDIR/main.cpp <<EOF
@@ -117,7 +117,7 @@ EOF
   # Use preprocessed source to make debugging and profiling easier.
   function build-pp {
     CMD="g++ $OUTDIR/main.cpp -E -P -o $OUTDIR/sprite.ii -I$ROOT $INCLUDE $CFLAGS \
-        | tee $OUTDIR/log"
+        | tee $OUTDIR/build.log"
     if [[ $QUIET -eq 0 ]]; then
       echo $CMD
     fi
@@ -129,7 +129,7 @@ EOF
     perl -pi -e 'next if /__asm__/; s/([\;\{\}])/$1\n/g;' $OUTDIR/sprite.ii
   
     # Add -fno-omit-frame-pointer to use %rbp for the frame pointer.
-    CMD="g++ $OUTDIR/sprite.ii -o $EXE $CFLAGS 2>&1 | tee -a $OUTDIR/log"
+    CMD="g++ $OUTDIR/sprite.ii -o $EXE $CFLAGS 2>&1 | tee -a $OUTDIR/build.log"
     if [[ $QUIET -eq 0 ]]; then
       echo $CMD
     fi
@@ -139,7 +139,7 @@ EOF
   # Normal build.
   function build {
     CMD="g++ $OUTDIR/main.cpp -o $EXE -I$ROOT $INCLUDE $CFLAGS 2>&1 \
-        | tee $OUTDIR/log"
+        | tee $OUTDIR/build.log"
     if [[ $QUIET -eq 0 ]]; then
       echo $CMD
     fi
@@ -147,10 +147,5 @@ EOF
   }
   
   $BUILD
-  
-  
-  # ====== Install ======
-  mkdir -p $ROOT/bin
-  cp $EXE $ROOT/bin
 
 done

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+BENCHMARKS="reverse tak"
+
+function usage {
+  cat >&2 << EOF
+Executes all of the benchmark programs (defined as \"$BENCHMARKS\").
+
+USAGE
+    bench [-M|s]
+
+        -M
+            Do not remake the benchmarks (run only).
+
+        -s
+            Output a short summary of the timing results.
+EOF
+  exit 1;
+}
+
+SHORT_OUTPUT=0
+NO_MAKE=0
+
+while getopts "Ms" OPTION
+do
+  case $OPTION in
+    s)
+      SHORT_OUTPUT=1
+      ;;
+    M)
+      NO_MAKE=1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+
+if [ "$#" != "0" ]; then
+  usage
+  exit 1
+fi
+
+cd $ROOT
+LOG=bench.log
+echo -n > bench.log
+
+if [[ $NO_MAKE -eq 0 ]]; then
+  ./scripts/make-benchmarks -c refcnt-opt $BENCHMARKS 2>&1 | tee -a $LOG
+  ./scripts/make-benchmarks -c gc-opt $BENCHMARKS 2>&1 | tee -a $LOG
+  echo
+  echo
+fi
+
+
+# refcnt-opt
+echo "------ Config refcnt-opt ------"
+./scripts/install-benchmarks -c refcnt-opt -q $BENCHMARKS
+./scripts/run-benchmarks -s $BENCHMARKS 2>&1 | tee -a $LOG
+
+# gc-opt
+echo "------ Config gc-opt ------"
+./scripts/install-benchmarks -c gc-opt -q $BENCHMARKS
+./scripts/run-benchmarks -s $BENCHMARKS 2>&1 | tee -a $LOG
