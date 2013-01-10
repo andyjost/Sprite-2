@@ -1,7 +1,4 @@
 #include "sprite/sprite.hpp"
-#include "benchmarks/reverse/module.hpp"
-#include <boost/foreach.hpp>
-#include <boost/tr1/functional.hpp>
 
 namespace sprite
 {
