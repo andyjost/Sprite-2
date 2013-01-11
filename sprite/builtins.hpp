@@ -8,6 +8,24 @@
 
 namespace sprite
 {
+  // ==== Fail ====
+  struct FailNode : Node
+  {
+    FailNode() : Node(FAIL) {}
+    virtual ~FailNode() {}
+    virtual char const * name() { return "failure"; }
+    virtual void show() { std::cout << this->name(); }
+    virtual void N() {}
+    virtual void H() {}
+    virtual size_t arity() const { return 0; }
+    #if SPRITE_GC
+      virtual iterator begin() { return iterator(); }
+      virtual iterator end() { return iterator(); }
+      virtual const_iterator begin() const { return const_iterator(); }
+      virtual const_iterator end() const { return const_iterator(); }
+    #endif
+  };
+
   // ==== Int ====
   struct IntNode : Node
   {

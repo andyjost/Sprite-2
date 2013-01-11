@@ -9,7 +9,7 @@
 namespace sprite
 {
   // Default H action for failure nodes.
-  inline void fail() { throw RuntimeError(); }
+  inline void fail() { REWRITE(FailNode); }
   // Default H action for FWD nodes.
   inline void fwd()
   {

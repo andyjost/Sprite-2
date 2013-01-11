@@ -252,6 +252,10 @@ namespace sprite
     if(cond(new expr)) { true_ } else { false_ } \
   /**/
 
+// Handles an exempt node.  For convenience, this simply expands to a leaf that
+// rewrite to fail.
+#define DT_EXEMPT (DT_LEAF, REWRITE(FailNode))
+
 // ----
 
 // Defines a constructor node.
