@@ -82,8 +82,6 @@ TEXT.append(
 #define FN_III(name,path) FN_IV(BOOST_PP_SEQ_PUSH_FRONT(path,name))
 #define FN_IV(path) BOOST_PP_SEQ_CAT(path())
 
-#define INVOKER_NAME(A0, suffix) BOOST_PP_CAT(invoke_, FUNCTION_NAME(A0, suffix))
-
 #define CALL(macro,A0) BOOST_PP_CAT(macro##_,A0_Z(A0))
 #define REPEAT(A0) CALL(REPEAT,A0)
 
@@ -100,27 +98,20 @@ TEXT.append(
       )                                                                     \\
                                                                             \\
     /* Define the function to handle this branch in the DTree. */           \\
-    BEGIN_FUNCTION(A0,)                                                     \\
+    static BEGIN_FUNCTION(A0,)                                              \\
       static procedure vtable[] = { &fail, &fwd, &choice, &oper             \\
           REPEAT(A0)(VA_LEN(__VA_ARGS__),DTB_II,A0)                         \\
         };                                                                  \\
       TABLE_CALL(pos, vtable)                                               \\
     END_FUNCTION                                                            \\
-                                                                            \\
-    /* Define the invoker functions for the children of this branch. */     \\
-    REPEAT(A0)(VA_LEN(__VA_ARGS__),DTB_III,A0)                              \\
   /**/
-#define DTB_II(z,n,A0) , &this_type::INVOKER_NAME(A0, _##n)
-#define DTB_III(z,n,A0)                                                \\
-    static void INVOKER_NAME(A0, _##n)(void * x)                       \\
-      { reinterpret_cast<this_type *>(x)->FUNCTION_NAME(A0, _##n)(); } \\
-  /**/
+#define DTB_II(z,n,A0) , &this_type::FUNCTION_NAME(A0, _##n)
 
-#define DTL(A0,rule)                                                \\
-    BEGIN_FUNCTION(A0,)                                             \\
-      typedef CD_IDENT(A0_CD(A0)) inductive_type;                   \\
-      rule                                                          \\
-    END_FUNCTION                                                    \\
+#define DTL(A0,rule)                              \\
+    static BEGIN_FUNCTION(A0,)                    \\
+      typedef CD_IDENT(A0_CD(A0)) inductive_type; \\
+      rule                                        \\
+    END_FUNCTION                                  \\
   /**/
 
 #define TUPLE_TO_ARRAY(z) (VA_LEN z,z)

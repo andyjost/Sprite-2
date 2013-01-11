@@ -59,8 +59,6 @@
 #define FN_III(name,path) FN_IV(BOOST_PP_SEQ_PUSH_FRONT(path,name))
 #define FN_IV(path) BOOST_PP_SEQ_CAT(path())
 
-#define INVOKER_NAME(A0, suffix) BOOST_PP_CAT(invoke_, FUNCTION_NAME(A0, suffix))
-
 #define CALL(macro,A0) BOOST_PP_CAT(macro##_,A0_Z(A0))
 #define REPEAT(A0) CALL(REPEAT,A0)
 
