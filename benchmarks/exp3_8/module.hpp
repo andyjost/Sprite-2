@@ -61,7 +61,7 @@ namespace exp3_8
 
   OPERATION(MyIntNode, "myint", 1
     , (DT_BRANCH, RDX[0], TP_Nat
-        , (DT_LEAF, REWRITE(IntNode, 0))
+        , (DT_LEAF, REWRITE(IntNode, 0L))
         , (DT_LEAF, REWRITE(AddNode, one, NODE(MyIntNode, IND[0])))
         )
     )

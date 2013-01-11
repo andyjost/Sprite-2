@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BENCHMARKS="reverse tak"
+BENCHMARKS="reverse tak rfib exp3_8"
 CONFIGS="refcnt-opt gc-opt"
 
 function usage {
