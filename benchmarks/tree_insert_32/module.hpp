@@ -1,7 +1,8 @@
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/int.hpp"
 
-namespace tree_insert_32
+namespace sprite { namespace module { namespace tree_insert_32
 {
   /*
     data BT = Leaf | Branch Int BT BT
@@ -60,13 +61,18 @@ namespace tree_insert_32
   */
 
   using namespace sprite;
+  using lib::constants::i0;
+  using lib::constants::i1;
 
-  #define TP_Tree ((LeafNode, "Leaf", 0))((BranchNode, "Branch", 3))
-  TYPE(TP_Tree)
+  #define MODULE_14tree_insert_32_TP_4Tree                   \
+      (                                                      \
+          module::tree_insert_32                             \
+        , ((LeafNode, "Leaf", 0))((BranchNode, "Branch", 3)) \
+        )                                                    \
+    /**/
+  TYPE(MODULE_14tree_insert_32_TP_4Tree)
   
   STATIC_NODE(leaf, LeafNode);
-  STATIC_NODE(zero, IntNode, 0);
-  STATIC_NODE(one, IntNode, 1);
   STATIC_NODE(M1, IntNode, 16381);
   STATIC_NODE(A1, IntNode, 3007);
   STATIC_NODE(M2, IntNode, 32749);
@@ -80,7 +86,7 @@ namespace tree_insert_32
 
   // ====== insert ======
   OPERATION(InsertNode, "insert", 2
-    , (DT_BRANCH, RDX[1], TP_Tree
+    , (DT_BRANCH, RDX[1], MODULE_14tree_insert_32_TP_4Tree
         , (DT_LEAF, REWRITE(BranchNode, RDX[0], leaf, leaf))
         , (DT_LEAF
             , COND(
@@ -98,10 +104,10 @@ namespace tree_insert_32
 
   // ====== count ======
   OPERATION(CountNode, "count", 1
-    , (DT_BRANCH, RDX[0], TP_Tree
+    , (DT_BRANCH, RDX[0], MODULE_14tree_insert_32_TP_4Tree
         , (DT_LEAF, REWRITE(IntNode, 0L))
         , (DT_LEAF, REWRITE(
-              AddNode, one, NODE(AddNode
+              AddNode, i1, NODE(AddNode
                 , NODE(CountNode, IND[1])
                 , NODE(CountNode, IND[2]))
                 )
@@ -143,10 +149,10 @@ namespace tree_insert_32
   OPERATION(TreeLoopNode, "tree_loop", 3
     , (DT_LEAF
         , COND(
-              EqNode(RDX[0], zero)
+              EqNode(RDX[0], i0)
             , REWRITE(FwdNode, RDX[2])
             , REWRITE(TreeLoopNode
-                , NODE(SubNode, RDX[0], one)
+                , NODE(SubNode, RDX[0], i1)
                 , NODE(NextNode, RDX[1])
                 , NODE(InsertNode, RDX[1], RDX[2])
                 )
@@ -157,5 +163,5 @@ namespace tree_insert_32
   // ====== main ======
   OPERATION(MainNode, "main", 0
     , (DT_LEAF, REWRITE(CountNode, NODE(TreeLoopNode, COUNT, NODE(SEEDNode), leaf))))
-}
+}}}
 

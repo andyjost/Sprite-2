@@ -1,7 +1,8 @@
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/int.hpp"
 
-namespace tree_insert
+namespace sprite { namespace module { namespace tree_insert
 {
   /*
     m = 39916801
@@ -28,13 +29,15 @@ namespace tree_insert
     main = count (tree_loop iterations someseed Leaf)
   */
   using namespace sprite;
+  using lib::constants::i0;
+  using lib::constants::i1;
 
-  #define TP_Tree ((LeafNode, "Leaf", 0))((BranchNode, "Branch", 3))
-  TYPE(TP_Tree)
+  #define MODULE_11tree_insert_TP_4Tree                                 \
+      (module::tree_insert, ((Leaf, "Leaf", 0))((Branch, "Branch", 3))) \
+    /**/
+  TYPE(MODULE_11tree_insert_TP_4Tree)
   
-  STATIC_NODE(leaf, LeafNode);
-  STATIC_NODE(zero, IntNode, 0);
-  STATIC_NODE(one, IntNode, 1);
+  STATIC_NODE(leaf, Leaf);
   STATIC_NODE(m, IntNode, 39916801);
   STATIC_NODE(a_, IntNode, 1664525);
   STATIC_NODE(b, IntNode, 1013904223);
@@ -48,10 +51,10 @@ namespace tree_insert
 
   // ====== count ======
   OPERATION(CountNode, "count", 1
-    , (DT_BRANCH, RDX[0], TP_Tree
+    , (DT_BRANCH, RDX[0], MODULE_11tree_insert_TP_4Tree
         , (DT_LEAF, REWRITE(IntNode, 0L))
         , (DT_LEAF, REWRITE(
-              AddNode, one, NODE(AddNode
+              AddNode, i1, NODE(AddNode
                 , NODE(CountNode, IND[1])
                 , NODE(CountNode, IND[2]))
                 )
@@ -61,16 +64,16 @@ namespace tree_insert
       
   // ====== insert ======
   OPERATION(InsertNode, "insert", 2
-    , (DT_BRANCH, RDX[1], TP_Tree
-        , (DT_LEAF, REWRITE(BranchNode, RDX[0], leaf, leaf))
+    , (DT_BRANCH, RDX[1], MODULE_11tree_insert_TP_4Tree
+        , (DT_LEAF, REWRITE(Branch, RDX[0], leaf, leaf))
         , (DT_LEAF
             , COND(
                   LtNode(RDX[0], IND[0])
-                , REWRITE(BranchNode, IND[0], NODE(InsertNode, RDX[0], IND[1]), IND[2])
+                , REWRITE(Branch, IND[0], NODE(InsertNode, RDX[0], IND[1]), IND[2])
                 , COND(
                       LtNode(IND[0], RDX[0])
-                    , REWRITE(BranchNode, IND[0], IND[1], NODE(InsertNode, RDX[0], IND[2]))
-                    , REWRITE(BranchNode, IND[0], IND[1], IND[2])
+                    , REWRITE(Branch, IND[0], IND[1], NODE(InsertNode, RDX[0], IND[2]))
+                    , REWRITE(Branch, IND[0], IND[1], IND[2])
                     )
                 )
             )
@@ -81,10 +84,10 @@ namespace tree_insert
   OPERATION(TreeLoopNode, "tree_loop", 3
     , (DT_LEAF
         , COND(
-              EqNode(RDX[0], zero)
+              EqNode(RDX[0], i0)
             , REWRITE(FwdNode, RDX[2])
             , REWRITE(TreeLoopNode
-                , NODE(SubNode, RDX[0], one)
+                , NODE(SubNode, RDX[0], i1)
                 , NODE(RndNode, RDX[1])
                 , NODE(InsertNode, NODE(ModNode, RDX[1], modval), RDX[2])
                 )
@@ -96,5 +99,5 @@ namespace tree_insert
   OPERATION(MainNode, "main", 0
     , (DT_LEAF, REWRITE(CountNode, NODE(TreeLoopNode, iterations, someseed, leaf)))
     )
-}
+}}}
 

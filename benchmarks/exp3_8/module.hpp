@@ -1,7 +1,8 @@
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/int.hpp"
 
-namespace exp3_8
+namespace sprite { namespace module { namespace exp3_8
 {
   /*
     data Nat = Z | S Nat deriving (Eq,Ord, Show {-was:Text-})
@@ -25,23 +26,25 @@ namespace exp3_8
   */
 
   using namespace sprite;
+  using lib::constants::i1;
 
-  #define TP_Nat ((ZeroNode, "O", 0))((SuccNode, "S", 1))
-  TYPE(TP_Nat)
+  #define MODULE_6exp3_8_TP_3Nat                         \
+      (module::exp3_8, ((Zero, "O", 0))((Succ, "S", 1))) \
+    /**/
+  TYPE(MODULE_6exp3_8_TP_3Nat)
 
-  STATIC_NODE(one, IntNode, 1);
-  STATIC_NODE(n_zero, ZeroNode);
+  STATIC_NODE(zero, Zero);
 
   OPERATION(MyAddNode, "myadd", 2
-    , (DT_BRANCH, RDX[0], TP_Nat
+    , (DT_BRANCH, RDX[0], MODULE_6exp3_8_TP_3Nat
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
-        , (DT_LEAF, REWRITE(SuccNode, NODE(MyAddNode, IND[0], RDX[1])))
+        , (DT_LEAF, REWRITE(Succ, NODE(MyAddNode, IND[0], RDX[1])))
         )
     )
 
   OPERATION(MyMulNode, "mymul", 2
-    , (DT_BRANCH, RDX[1], TP_Nat
-        , (DT_LEAF, REWRITE(ZeroNode))
+    , (DT_BRANCH, RDX[1], MODULE_6exp3_8_TP_3Nat
+        , (DT_LEAF, REWRITE(Zero))
         , (DT_LEAF, REWRITE(MyAddNode, NODE(MyMulNode, RDX[0], IND[0]), RDX[0]))
         )
     )
@@ -49,26 +52,26 @@ namespace exp3_8
   OPERATION(FromIntegerNode, "fromInteger", 1
     , (DT_LEAF
         , COND(
-              LtNode(RDX[0], one)
-            , REWRITE(ZeroNode)
+              LtNode(RDX[0], i1)
+            , REWRITE(Zero)
             , REWRITE(
-                  SuccNode
-                , NODE(FromIntegerNode, NODE(SubNode, RDX[0], one))
+                  Succ
+                , NODE(FromIntegerNode, NODE(SubNode, RDX[0], i1))
                 )
             )
         )
     )
 
   OPERATION(MyIntNode, "myint", 1
-    , (DT_BRANCH, RDX[0], TP_Nat
+    , (DT_BRANCH, RDX[0], MODULE_6exp3_8_TP_3Nat
         , (DT_LEAF, REWRITE(IntNode, 0L))
-        , (DT_LEAF, REWRITE(AddNode, one, NODE(MyIntNode, IND[0])))
+        , (DT_LEAF, REWRITE(AddNode, i1, NODE(MyIntNode, IND[0])))
         )
     )
 
   OPERATION(MyPowNode, "mypow", 2
-    , (DT_BRANCH, RDX[1], TP_Nat
-        , (DT_LEAF, REWRITE(SuccNode, n_zero))
+    , (DT_BRANCH, RDX[1], MODULE_6exp3_8_TP_3Nat
+        , (DT_LEAF, REWRITE(Succ, zero))
         , (DT_LEAF, REWRITE(MyMulNode, RDX[0], NODE(MyPowNode, RDX[0], IND[0])))
         )
     )
@@ -85,4 +88,4 @@ namespace exp3_8
             )
         )
     )
-}
+}}}

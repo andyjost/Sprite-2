@@ -1,7 +1,8 @@
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/int.hpp"
 
-namespace rfib
+namespace sprite { namespace module { namespace rfib
 {
   /*
     nfib :: Double -> Double
@@ -11,23 +12,22 @@ namespace rfib
   */
 
   using namespace sprite;
-
-  STATIC_NODE(one, IntNode, 1);
-  STATIC_NODE(two, IntNode, 2);
+  using lib::constants::i1;
+  using lib::constants::i2;
 
   OPERATION(NFibNode, "nfib", 1
     , (DT_LEAF
         , COND(
-              LeNode(RDX[0], one)
+              LeNode(RDX[0], i1)
             , REWRITE(IntNode, 1)
             , REWRITE(
                   AddNode
                 , NODE(
                       AddNode
-                    , NODE(NFibNode, NODE(SubNode, RDX[0], one))
-                    , NODE(NFibNode, NODE(SubNode, RDX[0], two))
+                    , NODE(NFibNode, NODE(SubNode, RDX[0], i1))
+                    , NODE(NFibNode, NODE(SubNode, RDX[0], i2))
                     )
-                , one
+                , i1
                 )
             )
         )
@@ -36,5 +36,4 @@ namespace rfib
   OPERATION(MainNode, "main", 0
     , (DT_LEAF, REWRITE(NFibNode, NODE(IntNode, 30)))
     )
-
-}
+}}}

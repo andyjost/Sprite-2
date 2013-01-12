@@ -8,16 +8,25 @@
 
 namespace sprite { namespace lib
 {
-  using namespace int_::constants; // for i0, i1, ...
+  using namespace constants; // for i0, i1, ...
 
   // The List type.
-  #define PRELUDE_TP_LIST ((Nil, "[]", 0))((Cons, ":", 2))
+  #define PRELUDE_TP_LIST (lib, ((Nil, "[]", 0))((Cons, ":", 2)))
   TYPE(PRELUDE_TP_LIST)
 
 
   // The static constant [].
   STATIC_NODE(nil, Nil);
 
+
+  // append [] xs = xs
+  // append (x:xs) ys = x : (append xs ys)
+  OPERATION(AppendNode, "append", 2
+    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+        , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
+        , (DT_LEAF, REWRITE(Cons, IND[0], NODE(AppendNode, IND[1], RDX[1])))
+        )
+    )
 
   // head (x:_) = x
   OPERATION(head, "head", 1

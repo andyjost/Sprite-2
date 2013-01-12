@@ -101,7 +101,7 @@ int main()
 {
   using namespace sprite;
   using sprite::root;
-  root = new $BENCHMARK_NAME::MainNode();
+  root = new module::$BENCHMARK_NAME::MainNode();
   root->N();
   root->show();
   std::cout << std::endl;

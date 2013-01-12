@@ -1,7 +1,8 @@
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/int.hpp"
 
-namespace tak
+namespace sprite { namespace module { namespace tak
 {
   /*
     tak :: Int -> Int -> Int -> Int
@@ -14,8 +15,7 @@ namespace tak
   */
 
   using namespace sprite;
-
-  STATIC_NODE(one, IntNode, 1);
+  using namespace lib::constants;
 
   OPERATION(TakNode, "tak", 3
     , (DT_LEAF
@@ -24,21 +24,14 @@ namespace tak
             , REWRITE(FwdNode, RDX[2])
             , REWRITE(
                   TakNode
-                , NODE(TakNode, NODE(SubNode, RDX[0], one), RDX[1], RDX[2])
-                , NODE(TakNode, NODE(SubNode, RDX[1], one), RDX[2], RDX[0])
-                , NODE(TakNode, NODE(SubNode, RDX[2], one), RDX[0], RDX[1])
+                , NODE(TakNode, NODE(SubNode, RDX[0], i1), RDX[1], RDX[2])
+                , NODE(TakNode, NODE(SubNode, RDX[1], i1), RDX[2], RDX[0])
+                , NODE(TakNode, NODE(SubNode, RDX[2], i1), RDX[0], RDX[1])
                 )
             )
         )
     )
 
-  OPERATION(Goal1Node, "goal1", 0
-    , (DT_LEAF
-        , REWRITE(
-              TakNode, NODE(IntNode, 27), NODE(IntNode, 16), NODE(IntNode, 8)
-            )
-        )
-    )
-
+  OPERATION(Goal1Node, "goal1", 0 ,(DT_LEAF, REWRITE(TakNode, i27, i16, i8)))
   OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal1Node)))
-}
+}}}

@@ -3,8 +3,9 @@
 
 #pragma once
 #include "sprite/sprite.hpp"
+#include "sprite/lib/list.hpp"
 
-namespace reverse
+namespace sprite { namespace module { namespace reverse
 {
   /*
   -- Haskell benchmark: naive reverse on buil-in lists
@@ -63,13 +64,13 @@ namespace reverse
 
   using namespace sprite;
 
-  STATIC_NODE(one, IntNode, 1);
-
-  #define TP_Nat ((ZeroNode, "O", 0))((SuccNode, "S", 1))
-  TYPE(TP_Nat)
+  #define MODULE_7reverse_TP_3Nat                                 \
+      (module::reverse, ((ZeroNode, "O", 0))((SuccNode, "S", 1))) \
+    /**/
+  TYPE(MODULE_7reverse_TP_3Nat)
 
   OPERATION(MyAddNode, "add", 2
-    , (DT_BRANCH, RDX[0], TP_Nat
+    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
         , (DT_LEAF, REWRITE(SuccNode, NODE(MyAddNode, IND[0], RDX[1])))
         )
@@ -80,7 +81,7 @@ namespace reverse
     )
 
   OPERATION(MultNode, "mult", 2
-    , (DT_BRANCH, RDX[0], TP_Nat
+    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
         , (DT_LEAF, REWRITE(ZeroNode))
         , (DT_LEAF, REWRITE(MyAddNode, RDX[1], NODE(MultNode, IND[0], RDX[1])))
         )
@@ -98,33 +99,30 @@ namespace reverse
   OPERATION(Nat256M, "nat256M", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat16M), NODE(Nat16))))
   OPERATION(Nat1G, "nat1G", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat256M), NODE(Four))))
 
-  #define TP_MyBool ((MyTrue, "MyTrue", 0))((MyFalse, "MyFalse", 0))
-  TYPE(TP_MyBool)
-
-  #define TP_MyList ((MyCons, "MyCons", 2))((MyNil, "MyNil", 0))
-  TYPE(TP_MyList)
-
-  OPERATION(AppendNode, "append", 2
-    , (DT_BRANCH, RDX[0], TP_MyList
-        , (DT_LEAF, REWRITE(MyCons, IND[0], NODE(AppendNode, IND[1], RDX[1])))
-        , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
-        )
-    )
-
-  STATIC_NODE(nil, MyNil);
+  #define MODULE_7reverse_TP_6MyBool                                      \
+      (module::reverse, ((MyTrue, "MyTrue", 0))((MyFalse, "MyFalse", 0))) \
+    /**/
+  TYPE(MODULE_7reverse_TP_6MyBool)
 
   OPERATION(RevNode, "rev", 1
-    , (DT_BRANCH, RDX[0], TP_MyList
-        , (DT_LEAF, REWRITE(AppendNode, NODE(RevNode, IND[1]), NODE(MyCons, IND[0], nil)))
-        , (DT_LEAF, REWRITE(MyNil))
+    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+        , (DT_LEAF, REWRITE(lib::Nil))
+        , (DT_LEAF
+            , REWRITE(
+                  lib::AppendNode
+                , NODE(RevNode, IND[1])
+                , NODE(lib::Cons, IND[0]
+                , lib::nil)
+                )
+            )
         )
     )
 
   OPERATION(NatListNode, "natList", 1
-    , (DT_BRANCH, RDX[0], TP_Nat
-        , (DT_LEAF, REWRITE(MyNil))
+    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
+        , (DT_LEAF, REWRITE(lib::Nil))
         , (DT_LEAF, REWRITE(
-              MyCons
+              lib::Cons
             , NODE(SuccNode, IND[0])
             , NODE(NatListNode, IND[0]))
             )
@@ -132,9 +130,9 @@ namespace reverse
     )
 
   OPERATION(IsListNode, "isList", 1
-    , (DT_BRANCH, RDX[0], TP_MyList
-        , (DT_LEAF, REWRITE(IsListNode, IND[1]))
+    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
         , (DT_LEAF, REWRITE(MyTrue))
+        , (DT_LEAF, REWRITE(IsListNode, IND[1]))
         )
     )
 
@@ -191,8 +189,4 @@ namespace reverse
     )
 
   OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal10Node)))
-
-  #undef TP_Nat
-  #undef TP_MyBool
-  #undef TP_MyList
-}
+}}}

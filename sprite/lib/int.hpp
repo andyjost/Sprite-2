@@ -14,4 +14,4 @@ namespace sprite { namespace lib
     BOOST_PP_REPEAT(65,F,)
     #undef F
   }
-}}}
+}}
