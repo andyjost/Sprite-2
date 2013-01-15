@@ -33,12 +33,16 @@ namespace sprite
         Node * parent = roots.top();
         roots.pop();
         #if TRACEGC > 1
-          std::cout << "mark (" << (int)g_mark << ") @" << parent << std::endl;
+          std::cout << "mark (" << (int)parent->mark << "->" << (int)g_mark
+            << ") @" << parent << std::endl;
         #endif
 
-        parent->mark = g_mark;
-        for(Node::iterator p = parent->begin(), e = parent->end(); p!=e; ++p)
-          roots.push(*p);
+        if(parent->mark != g_mark)
+        {
+          parent->mark = g_mark;
+          for(Node::iterator p = parent->begin(), e = parent->end(); p!=e; ++p)
+            roots.push(*p);
+        }
       }
 
       #if TRACEGC
