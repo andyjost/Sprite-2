@@ -5,13 +5,14 @@ CONFIGS="refcnt-opt gc-opt"
 
 function usage {
   cat >&2 << EOF
-Executes all of the benchmark programs.
-
-The programs are: \"$BENCHMARKS\".
-The configurations are: \"$CONFIGS\".
+Executes one or more benchmark programs with one or more configurations.
 
 USAGE
-    bench [-M|s]
+    bench [-M|s] [-c config-spec] [bench-name ...]
+
+        -c config-spec
+            Run the specified configurations.  ``config-spec`` is a
+            space-separated list of configurations.  Defaults to \"$CONFIGS\".
 
         -M
             Do not remake the benchmarks (run only).
@@ -21,6 +22,10 @@ USAGE
 
         -q
             Work silently.
+
+        bench-name
+            Specifies the benchmarks to run.  Defaults to \"$BENCHMARKS\".
+            
 EOF
   exit 1;
 }
@@ -29,9 +34,12 @@ SHORT_FLAG="-s"
 NO_MAKE=0
 QUIET=0
 
-while getopts "Mlq" OPTION
+while getopts "c:Mlq" OPTION
 do
   case $OPTION in
+    c)
+      CONFIGS=$OPTARG
+      ;;
     l)
       SHORT_FLAG=""
       ;;
@@ -47,8 +55,7 @@ done
 shift $(($OPTIND - 1))
 
 if [ "$#" != "0" ]; then
-  usage
-  exit 1
+  BENCHMARKS=$@
 fi
 
 ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
