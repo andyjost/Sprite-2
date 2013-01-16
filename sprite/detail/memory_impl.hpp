@@ -39,7 +39,7 @@ namespace sprite
 
         if(parent->mark != g_mark)
         {
-          parent->mark = g_mark;
+          parent->mark = (parent->mark == LOCKED_MARK) ? LOCKED_MARK : g_mark;
           for(Node::iterator p = parent->begin(), e = parent->end(); p!=e; ++p)
             roots.push(*p);
         }
