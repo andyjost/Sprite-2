@@ -14,11 +14,17 @@ USAGE
             Run the specified configurations.  ``config-spec`` is a
             space-separated list of configurations.  Defaults to \"$CONFIGS\".
 
-        -M
-            Do not remake the benchmarks (run only).
+        -h
+            Display this help message.
 
         -l
             Output a long report of the timing results.
+
+        -M
+            Do not remake the benchmarks (run only).
+
+        -p
+            Passes the -p option to scripts/make-benchmarks.
 
         -q
             Work silently.
@@ -33,18 +39,25 @@ EOF
 SHORT_FLAG="-s"
 NO_MAKE=0
 QUIET=0
+P_OPT=""
 
-while getopts "c:Mlq" OPTION
+while getopts "c:hlMpq" OPTION
 do
   case $OPTION in
     c)
       CONFIGS=$OPTARG
+      ;;
+    h)
+      usage
       ;;
     l)
       SHORT_FLAG=""
       ;;
     M)
       NO_MAKE=1
+      ;;
+    p)
+      P_OPT="-p"
       ;;
     q)
       QUIET=1
@@ -72,7 +85,7 @@ fi
 if [[ $NO_MAKE == 0 ]]; then
   for CONFIG in $CONFIGS
   do
-    ./scripts/make-benchmarks -c $CONFIG $QUIET_OPTION $BENCHMARKS
+    ./scripts/make-benchmarks $P_OPT -c $CONFIG $QUIET_OPTION $BENCHMARKS
   done
 
   if [[ $QUIET == 0 ]]; then
