@@ -123,10 +123,10 @@ EOF
     fi
     eval $CMD
   
-    # The dumbest source reformatter ever.  Add a newline after every instance of
-    # any of the three characters ;{}.  Ignore asm directives or there will be
-    # errors.
-    perl -pi -e 'next if /__asm__/; s/([\;\{\}])/$1\n/g;' $OUTDIR/sprite.ii
+    # The dumbest source reformatter ever.  Add a newline after every instance
+    # of any of the three characters ;{}.  Ignore asm directives and literal
+    # strings or there will be errors.
+    perl -pi -e 'next if /__asm__|\"/; s/([\;\{\}])/$1\n/g;' $OUTDIR/sprite.ii
   
     # Add -fno-omit-frame-pointer to use %rbp for the frame pointer.
     CMD="g++ $OUTDIR/sprite.ii -o $EXE $CFLAGS 2>&1 | tee -a $OUTDIR/build.log"
