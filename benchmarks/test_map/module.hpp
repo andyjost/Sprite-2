@@ -20,7 +20,7 @@ namespace sprite { namespace module { namespace test_map
 
 
   OPERATION(MyMapNode, "mymap", 2
-    , (DT_BRANCH, RDX[1], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , REWRITE(Cons, APPLY(RDX[0],IND[0]), NODE(MyMapNode,RDX[0],IND[1]))

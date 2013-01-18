@@ -11,8 +11,8 @@ namespace sprite { namespace lib
   using namespace constants; // for i0, i1, ...
 
   // The List type.
-  #define PRELUDE_TP_LIST (lib, ((Nil, "[]", 0))((Cons, ":", 2)))
-  TYPE(PRELUDE_TP_LIST)
+  #define SPRITE_LIB_List (lib, ((Nil, "[]", 0))((Cons, ":", 2)))
+  TYPE(SPRITE_LIB_List)
 
 
   // The static constant [].
@@ -22,7 +22,7 @@ namespace sprite { namespace lib
   // append [] xs = xs
   // append (x:xs) ys = x : (append xs ys)
   OPERATION(append, "append", 2
-    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
         , (DT_LEAF, REWRITE(Cons, IND[0], NODE(append, IND[1], RDX[1])))
         )
@@ -30,7 +30,7 @@ namespace sprite { namespace lib
 
   // head (x:_) = x
   OPERATION(head, "head", 1
-    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , DT_EXEMPT
         , (DT_LEAF, REWRITE (FwdNode, IND[0]))
         )
@@ -39,7 +39,7 @@ namespace sprite { namespace lib
 
   // tail (_:xs) = xs
   OPERATION(tail, "tail", 1
-    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , DT_EXEMPT
         , (DT_LEAF, REWRITE (FwdNode, IND[1]))
         )
@@ -88,7 +88,7 @@ namespace sprite { namespace lib
     )
 
   OPERATION(takep, "takep", 2
-    , (DT_BRANCH, RDX[1], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , REWRITE(
@@ -107,7 +107,7 @@ namespace sprite { namespace lib
   // map _ []        = []
   // map f (x:xs)    = f x : map f xs
   OPERATION(map, "map", 2
-    , (DT_BRANCH, RDX[1], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , REWRITE(
@@ -124,7 +124,7 @@ namespace sprite { namespace lib
   // filter p (x:xs)   = if p x then x : filter p xs
   //                            else filter p xs
   OPERATION(filter, "filter", 2
-    , (DT_BRANCH, RDX[1], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , COND(

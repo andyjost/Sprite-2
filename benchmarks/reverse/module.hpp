@@ -105,7 +105,7 @@ namespace sprite { namespace module { namespace reverse
   TYPE(MODULE_7reverse_TP_6MyBool)
 
   OPERATION(RevNode, "rev", 1
-    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(lib::Nil))
         , (DT_LEAF
             , REWRITE(
@@ -130,7 +130,7 @@ namespace sprite { namespace module { namespace reverse
     )
 
   OPERATION(IsListNode, "isList", 1
-    , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(MyTrue))
         , (DT_LEAF, REWRITE(IsListNode, IND[1]))
         )
