@@ -96,6 +96,7 @@ fi
 
 
 # Run.
+echo "Running on `hostname`."
 for CONFIG in $CONFIGS
 do
   echo "------ Config $CONFIG ------"
