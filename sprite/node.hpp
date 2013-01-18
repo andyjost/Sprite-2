@@ -399,12 +399,14 @@ namespace sprite
 
   /**/
 
+// Initialize/destroy a successor.
+#define SPRITE_INIT_CHILD(z,n,_) new(&args[n]) NodePtr(arg##n);
+#define SPRITE_DEL_CHILD(z,n,_) CHILD(n).~NodePtr();
+
 // Manage in-place child lists.
 #define SPRITE_ALLOC_IP(arity)
 #define SPRITE_DEALLOC_IP(arity)
 #define SPRITE_DECL_IP(arity) void * args[arity];
-#define SPRITE_INIT_IP(z,n,_) new(&args[n]) NodePtr(arg##n);
-#define SPRITE_DEL_IP(z,n,_) CHILD(n).~NodePtr();
 
 // Manage not-in-place child lists.
 #define SPRITE_ALLOC_NIP(arity)                                       \
@@ -412,8 +414,6 @@ namespace sprite
   /**/
 #define SPRITE_DEALLOC_NIP(arity) child_allocator[arity].free(args);
 #define SPRITE_DECL_NIP(arity) void ** args;
-#define SPRITE_INIT_NIP(z,n,_) new(&args[n]) NodePtr(arg##n);
-#define SPRITE_DEL_NIP(z,n,_) CHILD(n).~NodePtr();
 
 // Expands to the constructor, descructor and data declarations.
 // Relies on the following five implementation macros:
@@ -423,17 +423,13 @@ namespace sprite
 //         Expands to a statement that dynamic deallocates the child node list.
 //     SPRITE_DECL_##mode  
 //         Expands to the class-level declaration of the child nodes.
-//     SPRITE_INIT_##mode  
-//         Expands to a statement that initializes one child node.
-//     SPRITE_DEL_##mode  
-//         Expands to a statement that destroys one child node.
 #define SPRITE_NODE_PREAMBLE_I(mode, clsname, complete, arity, tag)      \
     /* Declare the constructor. */                                       \
     clsname(BOOST_PP_ENUM_PARAMS(arity, NodePtr const & arg))            \
       : Node(tag)                                                        \
     {                                                                    \
       SPRITE_ALLOC_##mode(arity)                                         \
-      BOOST_PP_REPEAT(arity,SPRITE_INIT_##mode,)                         \
+      BOOST_PP_REPEAT(arity,SPRITE_INIT_CHILD,)                          \
     }                                                                    \
     /* Expands to nothing if arity is zero, or another constructor (from \
      * Partial) otherwise.                                               \
@@ -444,7 +440,7 @@ namespace sprite
     BOOST_PP_EXPR_IF(SPRITE_USE_DTOR                                     \
       , virtual ~clsname()                                               \
         {                                                                \
-          BOOST_PP_REPEAT(arity,SPRITE_DEL_##mode,)                      \
+          BOOST_PP_REPEAT(arity,SPRITE_DEL_CHILD,)                       \
           SPRITE_DEALLOC_##mode(arity)                                   \
         }                                                                \
       )                                                                  \
@@ -466,7 +462,7 @@ namespace sprite
       SPRITE_ALLOC_##mode(arity)                                       \
       copy_successors(this, part);                                     \
       BOOST_PP_REPEAT_FROM_TO(                                         \
-          BOOST_PP_SUB(arity,1),arity,SPRITE_INIT_##mode,              \
+          BOOST_PP_SUB(arity,1),arity,SPRITE_INIT_CHILD,               \
         )                                                              \
     }                                                                  \
   /**/
