@@ -306,11 +306,10 @@ namespace sprite
 #define APPLY(func,arg) sprite::apply(func,arg)
 #endif
 
-// Performs a conditional rewrite at the current redex.  expr must be an
-// expression that reduces to a Boolean result.
+// Performs a conditional rewrite at the current redex.  expr must be a node
+// heading an expression that reduces to a Boolean result.
 #define COND(expr,true_,false_)              \
     if(cond(expr)) { true_ } else { false_ } \
-  /**/
 
 // Handles an exempt node.  For convenience, this simply expands to a leaf that
 // rewrite to fail.

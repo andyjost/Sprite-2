@@ -101,10 +101,6 @@ namespace sprite { namespace lib
     )
 
 
-  // THIS IS A PLACEHOLDER --- REPLACE WITH AN ACTUAL APPLY
-  OPERATION(xapply, "apply", 2, (DT_LEAF, REWRITE(xapply, RDX[0], RDX[1])))
-
-
   // map _ []        = []
   // map f (x:xs)    = f x : map f xs
   OPERATION(map, "map", 2
@@ -113,7 +109,7 @@ namespace sprite { namespace lib
         , (DT_LEAF
             , REWRITE(
                   Cons
-                , NODE(xapply, RDX[0], IND[0])
+                , APPLY(RDX[0], IND[0])
                 , NODE(map,  RDX[0], IND[1])
                 )
             )
@@ -129,7 +125,7 @@ namespace sprite { namespace lib
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , COND(
-                  NODE(xapply, RDX[0], IND[0])
+                  APPLY(RDX[0], IND[0])
                 , REWRITE(Cons, IND[0], NODE(filter, RDX[0], IND[1]))
                 , REWRITE(filter, RDX[0], IND[1])
                 )
@@ -142,9 +138,7 @@ namespace sprite { namespace lib
    OPERATION(iterate, "iterate", 2
      , (DT_LEAF
          , REWRITE(
-               Cons, RDX[1]
-             , NODE(iterate, RDX[0]
-             , NODE(xapply, RDX[0], RDX[1]))
+               Cons, RDX[1], NODE(iterate, RDX[0], APPLY(RDX[0],RDX[1]))
              )
          )
      )
