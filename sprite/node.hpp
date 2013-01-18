@@ -74,10 +74,10 @@ namespace sprite
       #endif
 
       #if SPRITE_REFCNT
-        // Reference counting.
-        // New nodes have a reference count of zero.
-        // FIXME: I don't think this is necessary.
-        reinterpret_cast<Node *>(p)->refcnt = 0;
+        // New nodes have a reference count of zero.  That value is already
+        // set, either by the system (for new memory) or because the previous
+        // node was reclaimed (with a count of zero).
+        assert(reinterpret_cast<Node *>(p)->refcnt == 0);
       #endif
       return p;
     }
