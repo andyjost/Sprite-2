@@ -109,7 +109,7 @@ namespace sprite { namespace module { namespace reverse
         , (DT_LEAF, REWRITE(lib::Nil))
         , (DT_LEAF
             , REWRITE(
-                  lib::AppendNode
+                  lib::append
                 , NODE(RevNode, IND[1])
                 , NODE(lib::Cons, IND[0]
                 , lib::nil)

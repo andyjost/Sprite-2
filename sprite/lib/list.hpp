@@ -21,10 +21,10 @@ namespace sprite { namespace lib
 
   // append [] xs = xs
   // append (x:xs) ys = x : (append xs ys)
-  OPERATION(AppendNode, "append", 2
+  OPERATION(append, "append", 2
     , (DT_BRANCH, RDX[0], PRELUDE_TP_LIST
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
-        , (DT_LEAF, REWRITE(Cons, IND[0], NODE(AppendNode, IND[1], RDX[1])))
+        , (DT_LEAF, REWRITE(Cons, IND[0], NODE(append, IND[1], RDX[1])))
         )
     )
 
