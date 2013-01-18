@@ -308,8 +308,8 @@ namespace sprite
 
 // Performs a conditional rewrite at the current redex.  expr must be an
 // expression that reduces to a Boolean result.
-#define COND(expr,true_,false_)                  \
-    if(cond(new expr)) { true_ } else { false_ } \
+#define COND(expr,true_,false_)              \
+    if(cond(expr)) { true_ } else { false_ } \
   /**/
 
 // Handles an exempt node.  For convenience, this simply expands to a leaf that

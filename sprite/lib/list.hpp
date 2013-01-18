@@ -61,7 +61,8 @@ namespace sprite { namespace lib
   // denoted as [n..m]
   OPERATION(enumFromTo, "enumFromTo", 2
     , (DT_LEAF
-        , COND (GtNode(RDX[0], RDX[1])
+        , COND(
+              NODE(GtNode, RDX[0], RDX[1])
             , REWRITE(Nil)
             , REWRITE(Cons, RDX[0]
                 , NODE(enumFromTo, NODE(AddNode, RDX[0], i1), RDX[1])
@@ -80,7 +81,7 @@ namespace sprite { namespace lib
   OPERATION(take, "take", 2
     , (DT_LEAF 
         , COND(
-              LeNode(RDX[0], i0)
+              NODE(LeNode, RDX[0], i0)
             , REWRITE(Nil)
             , REWRITE(takep, RDX[0], RDX[1])
             )
@@ -128,7 +129,7 @@ namespace sprite { namespace lib
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , COND(
-                  xapply(RDX[0], IND[0])
+                  NODE(xapply, RDX[0], IND[0])
                 , REWRITE(Cons, IND[0], NODE(filter, RDX[0], IND[1]))
                 , REWRITE(filter, RDX[0], IND[1])
                 )

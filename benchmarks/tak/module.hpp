@@ -20,7 +20,7 @@ namespace sprite { namespace module { namespace tak
   OPERATION(TakNode, "tak", 3
     , (DT_LEAF
         , COND(
-              LeNode(RDX[0], RDX[1])
+              NODE(LeNode, RDX[0], RDX[1])
             , REWRITE(FwdNode, RDX[2])
             , REWRITE(
                   TakNode

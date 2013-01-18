@@ -52,7 +52,7 @@ namespace sprite { namespace module { namespace exp3_8
   OPERATION(FromIntegerNode, "fromInteger", 1
     , (DT_LEAF
         , COND(
-              LtNode(RDX[0], i1)
+              NODE(LtNode, RDX[0], i1)
             , REWRITE(Zero)
             , REWRITE(
                   Succ
