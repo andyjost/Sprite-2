@@ -109,7 +109,7 @@ namespace sprite
   #define SPRITE_MATH_DECL(name, op)                                    \
       struct name : Node                                                \
       {                                                                 \
-        SPRITE_NODE_PREAMBLE(name, #op, 2, OPER)                        \
+        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)                  \
         virtual void N() { H(); }                                       \
         virtual void H()                                                \
         {                                                               \
@@ -130,7 +130,7 @@ namespace sprite
   #define SPRITE_CMP_DECL(name, op)                                      \
       struct name : Node                                                 \
       {                                                                  \
-        SPRITE_NODE_PREAMBLE(name, #op, 2, OPER)                         \
+        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)                   \
         virtual void N() { H(); }                                        \
         virtual void H()                                                 \
         {                                                                \

@@ -5,6 +5,8 @@
 #pragma once
 #include "sprite/common.hpp"
 #include "sprite/memory.hpp"
+#include <boost/mpl/if.hpp>
+#include <boost/mpl/size_t.hpp>
 #include <boost/utility.hpp>
 
 #if SPRITE_REFCNT
@@ -13,6 +15,10 @@
 
 namespace sprite
 {
+  namespace mpl = boost::mpl;
+  using boost::enable_if_c;
+  using boost::disable_if_c;
+
   struct NodeH;
 
   struct Node
@@ -34,6 +40,7 @@ namespace sprite
     virtual void H() = 0;
     virtual int64 value() { throw RuntimeError(); }
     virtual size_t arity() const = 0;
+    virtual Node * apply(Node * arg) { throw RuntimeError(); }
   
     tag_type tag;
 
@@ -157,6 +164,52 @@ namespace sprite
     Node * get(Node * ptr) { return ptr; }
   #endif
 
+  // A freestanding apply function.
+  inline NodePtr apply(NodePtr const & func, NodePtr const & arg)
+    { return func->apply(get(arg)); }
+
+  inline NodePtr apply(Node & func, NodePtr const & arg)
+    { return func.apply(get(arg)); }
+
+  /**
+   * @brief Primarty template declaration for partial nodes.
+   *
+   * The template arguments are defined as follows:
+   *
+   *   CompleteType
+   *       The type of the complete node.  After all arguments have been bound,
+   *       an instnace of that type is constructed.
+   *
+   *   NumBound
+   *       The number of bound arguments, where:
+   *
+   *           0 <= NumBound < CompleteType::arity_value::value
+   */
+  template<typename CompleteType, size_t NumBound> struct Partial;
+
+  /// Copies successors from the source to destination.  
+  template<typename T, typename U>
+  void copy_successors(T * dst, U * src
+    , typename enable_if_c<
+          (T::arity_value::value > 0 && U::arity_value::value > 0)
+        >::type* = 0
+    )
+  {
+    // TODO - Use SIMD and static unrolling.
+    BOOST_STATIC_ASSERT(T::arity_value::value >= U::arity_value::value);
+    for(size_t i=0; i<U::arity_value::value; ++i)
+      { (*dst)[i] = (*src)[i]; }
+  }
+
+  template<typename T, typename U>
+  void copy_successors(T * dst, U * src
+    , typename disable_if_c<
+          (T::arity_value::value > 0 && U::arity_value::value > 0)
+        >::type* = 0
+    )
+  {
+  }
+
   #if SPRITE_GC
     /**
      * @brief A node pointer that prevents collection.
@@ -246,6 +299,13 @@ namespace sprite
 // Performs a rewrite at the current redex.
 #define REWRITE(type, ...) rewrite<type>(__VA_ARGS__);
 
+// Performs application to a partially-bound call.
+#if SPRITE_GC
+#define APPLY(func,arg) LockedPtr(sprite::apply(func,arg))
+#else
+#define APPLY(func,arg) sprite::apply(func,arg)
+#endif
+
 // Performs a conditional rewrite at the current redex.  expr must be an
 // expression that reduces to a Boolean result.
 #define COND(expr,true_,false_)                  \
@@ -259,28 +319,29 @@ namespace sprite
 // ----
 
 // Defines a constructor node.
-#define CONSTRUCTOR(ident, label, arity, id)              \
-    struct ident : Node                                   \
-    {                                                     \
-      SPRITE_NODE_PREAMBLE(ident, label, arity, id)       \
-      virtual void N() { BOOST_PP_REPEAT(arity,CTOR_I,) } \
-      virtual void H() {}                                 \
-    };                                                    \
+#define CONSTRUCTOR(ident, label, arity, id)                  \
+    struct ident : Node                                       \
+    {                                                         \
+      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, id)    \
+      virtual void N() { BOOST_PP_REPEAT(arity,CTOR_I,) }     \
+      virtual void H() {}                                     \
+    };                                                        \
   /**/
+// Note: this macro is also used in partial.hpp.
 #define CTOR_I(z,n,_) (*this)[n]->N();
 
 // ----
 
 // Defines an operation node.
-#define OPERATION(ident, label, arity, dtree)           \
-    struct ident : Node                                 \
-    {                                                   \
-      SPRITE_NODE_PREAMBLE(ident, label, arity, OPER)   \
-      virtual void N() { g_redex = this; dt(); N(); }   \
-      virtual void H() { g_redex = this; dt(); H(); }   \
-    private:                                            \
-      __attribute__((noinline)) DEFINITIONAL_TREE dtree \
-    };                                                  \
+#define OPERATION(ident, label, arity, dtree)                 \
+    struct ident : Node                                       \
+    {                                                         \
+      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, OPER)  \
+      virtual void N() { g_redex = this; dt(); N(); }         \
+      virtual void H() { g_redex = this; dt(); H(); }         \
+    private:                                                  \
+      __attribute__((noinline)) DEFINITIONAL_TREE dtree       \
+    };                                                        \
   /**/
 
 // Performs a virtual call through a vtable.
@@ -295,13 +356,14 @@ namespace sprite
 #define SPRITE_SHOW(z,n,_) std::cout << " "; CHILD(n)->show();
 
 // Declares the constructor and children.
-#define SPRITE_NODE_PREAMBLE(clsname, label, arity_, tag)                       \
+#define SPRITE_NODE_PREAMBLE(clsname, complete, label, arity_, tag)             \
     BOOST_PP_IF(                                                                \
         BOOST_PP_LESS(arity_, SPRITE_INPLACE_BOUND)                             \
-      , SPRITE_NODE_PREAMBLE_I(IP, clsname, arity_, tag)                        \
-      , SPRITE_NODE_PREAMBLE_I(NIP, clsname, arity_, tag)                       \
+      , SPRITE_NODE_PREAMBLE_I(IP, clsname, complete, arity_, tag)              \
+      , SPRITE_NODE_PREAMBLE_I(NIP, clsname, complete, arity_, tag)             \
       )                                                                         \
     typedef clsname this_type;                                                  \
+    typedef mpl::size_t<arity_> arity_value;                                    \
     virtual char const * name() { return label; }                               \
     virtual void show()                                                         \
     {                                                                           \
@@ -310,7 +372,7 @@ namespace sprite
       BOOST_PP_REPEAT(arity_,SPRITE_SHOW,)                                      \
       if(arity_ > 0) std::cout << ")";                                          \
     }                                                                           \
-    virtual size_t arity() const { return arity_; }                             \
+    virtual size_t arity() const { return arity_value::value; }                 \
     /* Declare operator[] and at() if arity is not zero. */                     \
     BOOST_PP_EXPR_IF(arity_                                                     \
       , inline NodePtr & operator[](size_t i)                                   \
@@ -365,23 +427,48 @@ namespace sprite
 //         Expands to a statement that initializes one child node.
 //     SPRITE_DEL_##mode  
 //         Expands to a statement that destroys one child node.
-#define SPRITE_NODE_PREAMBLE_I(mode, clsname, arity, tag)     \
-    /* Declare the constructor. */                            \
-    clsname(BOOST_PP_ENUM_PARAMS(arity, NodePtr const & arg)) \
-      : Node(tag)                                             \
-    {                                                         \
-      SPRITE_ALLOC_##mode(arity)                              \
-      BOOST_PP_REPEAT(arity,SPRITE_INIT_##mode,)              \
-    }                                                         \
-    BOOST_PP_EXPR_IF(SPRITE_USE_DTOR                          \
-      , virtual ~clsname()                                    \
-        {                                                     \
-          BOOST_PP_REPEAT(arity,SPRITE_DEL_##mode,)           \
-          SPRITE_DEALLOC_##mode(arity)                        \
-        }                                                     \
-      )                                                       \
-    /* Declare the child node storage */                      \
-    SPRITE_DECL_##mode(arity)                                 \
+#define SPRITE_NODE_PREAMBLE_I(mode, clsname, complete, arity, tag)      \
+    /* Declare the constructor. */                                       \
+    clsname(BOOST_PP_ENUM_PARAMS(arity, NodePtr const & arg))            \
+      : Node(tag)                                                        \
+    {                                                                    \
+      SPRITE_ALLOC_##mode(arity)                                         \
+      BOOST_PP_REPEAT(arity,SPRITE_INIT_##mode,)                         \
+    }                                                                    \
+    /* Expands to nothing if arity is zero, or another constructor (from \
+     * Partial) otherwise.                                               \
+     */                                                                  \
+    BOOST_PP_CAT(SPRITE_NODE_PREAMBLE_II_, BOOST_PP_BOOL(arity))         \
+        (mode,clsname,complete,arity,tag)                                \
+                                                                         \
+    BOOST_PP_EXPR_IF(SPRITE_USE_DTOR                                     \
+      , virtual ~clsname()                                               \
+        {                                                                \
+          BOOST_PP_REPEAT(arity,SPRITE_DEL_##mode,)                      \
+          SPRITE_DEALLOC_##mode(arity)                                   \
+        }                                                                \
+      )                                                                  \
+    /* Declare the child node storage */                                 \
+    SPRITE_DECL_##mode(arity)                                            \
+  /**/
+
+
+/// Adds construction from a partial application (or nothing).
+#define SPRITE_NODE_PREAMBLE_II_0(mode, clsname, complete, arity, tag)
+#define SPRITE_NODE_PREAMBLE_II_1(mode, clsname, complete, arity, tag) \
+    /* Construct from a partial application plus additional args. */   \
+    clsname(                                                           \
+        Partial<complete,BOOST_PP_DEC(arity)> * part                   \
+      , NodePtr const & BOOST_PP_CAT(arg,BOOST_PP_DEC(arity))          \
+      )                                                                \
+      : Node(tag)                                                      \
+    {                                                                  \
+      SPRITE_ALLOC_##mode(arity)                                       \
+      copy_successors(this, part);                                     \
+      BOOST_PP_REPEAT_FROM_TO(                                         \
+          BOOST_PP_SUB(arity,1),arity,SPRITE_INIT_##mode,              \
+        )                                                              \
+    }                                                                  \
   /**/
 
 /**
@@ -392,6 +479,33 @@ namespace sprite
 
 namespace sprite
 {
+  #define F(z,n,_)                                                            \
+      template<typename CompleteType>                                         \
+      struct Partial<CompleteType,n> : Node                                   \
+      {                                                                       \
+        SPRITE_NODE_PREAMBLE(Partial, CompleteType, ("Partial_" #n), n, CTOR) \
+        virtual void N() { BOOST_PP_REPEAT(n,CTOR_I,) }                       \
+        virtual void H() {}                                                   \
+        virtual Node * apply(Node * arg)                                      \
+        {                                                                     \
+          typedef typename                                                    \
+              mpl::if_c<                                                      \
+                  n+1 == CompleteType::arity_value::value                     \
+                , CompleteType                                                \
+                , Partial<CompleteType, n+1>                                  \
+                >::type                                                       \
+            next_type;                                                        \
+          next_type * next = new next_type(this, arg);                        \
+          return next;                                                        \
+        }                                                                     \
+      };                                                                      \
+    /**/
+  
+  // Declare partial specializations of Partial (i.e., partial application) where
+  // NumBound == 0,1,...SPRITE_ARITY_BOUND-2.
+  BOOST_PP_REPEAT(BOOST_PP_DEC(SPRITE_ARITY_BOUND), F, )
+  #undef F
+
   // A holder for a full-sized allocation unit.  A range of NodeH's will have a
   // stride of NODE_BYTES bytes.
   CONSTRUCTOR(NodeH, "NodeH", BOOST_PP_DEC(SPRITE_INPLACE_BOUND), 0)
