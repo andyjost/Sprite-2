@@ -74,10 +74,10 @@ namespace sprite
       #endif
 
       #if SPRITE_REFCNT
-        // New nodes have a reference count of zero.  That value is already
-        // set, either by the system (for new memory) or because the previous
-        // node was reclaimed (with a count of zero).
-        assert(reinterpret_cast<Node *>(p)->refcnt == 0);
+        // Note: It's not clear why this must be set.  The memory either from
+        // the system (for new memory) or a reused node that was reclaimed
+        // (with a count of zero).
+        reinterpret_cast<Node *>(p)->refcnt = 0;
       #endif
       return p;
     }
@@ -228,7 +228,7 @@ namespace sprite
      */
     struct LockedPtr : boost::noncopyable
     {
-      explicit LockedPtr(Node * p) : px(p)
+      explicit LockedPtr(NodePtr const & p) : px(p)
         { assert(px->mark == LOCKED_MARK); }
       ~LockedPtr()
       {

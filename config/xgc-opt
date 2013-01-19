@@ -1,2 +1,3 @@
 . $ROOT/config/base-config
-CFLAGS="$CFLAGS -DSPRITE_GC_MODE=2 -O5 -DNDEBUG"
+# Note that NDEBUG cannot be set with SPRITE_GC_MODE=2, since the crosscheck is an assert.
+CFLAGS="$CFLAGS -DSPRITE_GC_MODE=2 -O5"
