@@ -306,6 +306,9 @@ namespace sprite
 #define APPLY(func,arg) sprite::apply(func,arg)
 #endif
 
+// Forms the type name of a partial application type.
+#define PARTIAL(op,nbound) (Partial<op,nbound>)
+
 // Performs a conditional rewrite at the current redex.  expr must be a node
 // heading an expression that reduces to a Boolean result.
 #define COND(expr,true_,false_)              \

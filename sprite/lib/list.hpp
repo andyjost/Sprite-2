@@ -135,13 +135,41 @@ namespace sprite { namespace lib
 
 
   // iterate f x = x : iterate f (f x)
-   OPERATION(iterate, "iterate", 2
-     , (DT_LEAF
-         , REWRITE(
-               Cons, RDX[1], NODE(iterate, RDX[0], APPLY(RDX[0],RDX[1]))
-             )
-         )
-     )
+  OPERATION(iterate, "iterate", 2
+    , (DT_LEAF
+        , REWRITE(
+              Cons, RDX[1], NODE(iterate, RDX[0], APPLY(RDX[0],RDX[1]))
+            )
+        )
+    )
+
+  // index xs i = if i < 0 then fail else indexp xs i
+  //    where indexp (x::xs) i = if i == 0 then x else indexp xs (i-1)
+  // denoted as a !! i
+  struct indexp;
+
+  OPERATION(index, "index", 2
+    , (DT_LEAF
+        , COND(
+              NODE(LtNode, RDX[1], i0)
+            , REWRITE(FailNode)
+            , REWRITE(indexp, RDX[0], RDX[1])
+            )
+        )
+    )
+
+  OPERATION(indexp, "indexp", 2
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
+        , DT_EXEMPT
+        , (DT_LEAF
+            , COND(
+                  NODE(EqNode, RDX[1], i0)
+                , REWRITE(FwdNode, IND[0])
+                , REWRITE(indexp, IND[1], NODE(SubNode, RDX[1], i1))
+                )
+            )
+        )
+    )
 
   // TODO: comprehension
 }}
