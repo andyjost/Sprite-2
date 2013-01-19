@@ -13,7 +13,8 @@ namespace sprite
   {
     FailNode() : Node(FAIL) {}
     virtual ~FailNode() {}
-    virtual char const * name() { return "failure"; }
+    static std::string static_name() { return "failure"; }
+    virtual std::string name() { return static_name(); }
     virtual void show() { std::cout << this->name(); }
     virtual void N() {}
     virtual void H() {}
@@ -32,7 +33,8 @@ namespace sprite
     int64 m_value;
     IntNode(int64 value_=0) : Node(CTOR), m_value(value_) {}
     virtual ~IntNode() {}
-    virtual char const * name() { return "IntNode"; }
+    static std::string static_name() { return "Int"; }
+    virtual std::string name() { return static_name(); }
     virtual void show() { std::cout << m_value; }
     virtual void N() {}
     virtual void H() {}
@@ -66,9 +68,9 @@ namespace sprite
   {
     BoolNode(bool value) : Node(value ? 1 : 0) { assert(CTOR == 0); }
     virtual ~BoolNode() {}
-    virtual char const * name()
-      { return is_false(this) ? "False" : "True"; }
-    virtual void show() { std::cout << this->name(); }
+    static std::string static_name() { return "Bool"; }
+    virtual std::string name() { return static_name(); }
+    virtual void show() { std::cout << (is_false(this) ? "False" : "True"); }
     virtual void N() {}
     virtual void H() {}
     virtual size_t arity() const { return 0; }
@@ -89,7 +91,8 @@ namespace sprite
     NodePtr dest;
     FwdNode(NodePtr const & dest_) : Node(FWD), dest(dest_) {}
     virtual ~FwdNode() {}
-    virtual char const * name() { return "FwdNode"; }
+    static std::string static_name() { return "FwdNode"; }
+    virtual std::string name() { return static_name(); }
     virtual void show() { dest->show(); }
     virtual void N() { dest->N(); }
     virtual void H() { dest->H(); }

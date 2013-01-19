@@ -70,6 +70,7 @@ namespace sprite
 #include <cassert>
 #include <exception>
 #include <iostream>
+#include <string>
 
 namespace sprite
 {

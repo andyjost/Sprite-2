@@ -34,7 +34,7 @@ namespace sprite
     virtual ~Node() {}
     #endif
   
-    virtual char const * name() { return "Node"; }
+    virtual std::string name() { return "Node"; }
     virtual void show() { std::cout << name(); }
     virtual void N() = 0;
     virtual void H() = 0;
@@ -366,11 +366,12 @@ namespace sprite
       )                                                                         \
     typedef clsname this_type;                                                  \
     typedef mpl::size_t<arity_> arity_value;                                    \
-    virtual char const * name() { return label; }                               \
+    static std::string static_name() { return label; }                          \
+    virtual std::string name() { return static_name(); }                        \
     virtual void show()                                                         \
     {                                                                           \
       if(arity_ > 0) std::cout << "(";                                          \
-      std::cout << name();                                                      \
+      std::cout << static_name();                                               \
       BOOST_PP_REPEAT(arity_,SPRITE_SHOW,)                                      \
       if(arity_ > 0) std::cout << ")";                                          \
     }                                                                           \
@@ -477,26 +478,30 @@ namespace sprite
 
 namespace sprite
 {
-  #define F(z,n,_)                                                            \
-      template<typename CompleteType>                                         \
-      struct Partial<CompleteType,n> : Node                                   \
-      {                                                                       \
-        SPRITE_NODE_PREAMBLE(Partial, CompleteType, ("Partial_" #n), n, CTOR) \
-        virtual void N() { BOOST_PP_REPEAT(n,CTOR_I,) }                       \
-        virtual void H() {}                                                   \
-        virtual Node * apply(Node * arg)                                      \
-        {                                                                     \
-          typedef typename                                                    \
-              mpl::if_c<                                                      \
-                  n+1 == CompleteType::arity_value::value                     \
-                , CompleteType                                                \
-                , Partial<CompleteType, n+1>                                  \
-                >::type                                                       \
-            next_type;                                                        \
-          next_type * next = new next_type(this, arg);                        \
-          return next;                                                        \
-        }                                                                     \
-      };                                                                      \
+  #define F(z,n,_)                                        \
+      template<typename CompleteType>                     \
+      struct Partial<CompleteType,n> : Node               \
+      {                                                   \
+        SPRITE_NODE_PREAMBLE(                             \
+            Partial, CompleteType                         \
+          , (CompleteType::static_name() + ("<" #n ">"))  \
+          , n, CTOR                                       \
+          )                                               \
+        virtual void N() { BOOST_PP_REPEAT(n,CTOR_I,) }   \
+        virtual void H() {}                               \
+        virtual Node * apply(Node * arg)                  \
+        {                                                 \
+          typedef typename                                \
+              mpl::if_c<                                  \
+                  n+1 == CompleteType::arity_value::value \
+                , CompleteType                            \
+                , Partial<CompleteType, n+1>              \
+                >::type                                   \
+            next_type;                                    \
+          next_type * next = new next_type(this, arg);    \
+          return next;                                    \
+        }                                                 \
+      };                                                  \
     /**/
   
   // Declare partial specializations of Partial (i.e., partial application) where
