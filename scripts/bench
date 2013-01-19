@@ -12,7 +12,7 @@ USAGE
 
         -c config-spec
             Run the specified configurations.  ``config-spec`` is a
-            space-separated list of configurations.  Defaults to \"$CONFIGS\".
+            space-separated list of configurations.  Defaults to "$CONFIGS".
 
         -h
             Display this help message.
@@ -30,7 +30,7 @@ USAGE
             Work silently.
 
         bench-name
-            Specifies the benchmarks to run.  Defaults to \"$BENCHMARKS\".
+            Specifies the benchmarks to run.  Defaults to "$BENCHMARKS".
             
 EOF
   exit 1;
