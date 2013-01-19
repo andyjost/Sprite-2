@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BENCHMARKS="reverse tak rfib exp3_8 tree_insert tree_insert_32"
-CONFIGS="refcnt-opt gc-opt"
+DEFAULT_CONFIGS="refcnt-opt gc-opt"
 
 function usage {
   cat >&2 << EOF
@@ -12,7 +12,8 @@ USAGE
 
         -c config-spec
             Run the specified configurations.  ``config-spec`` is a
-            space-separated list of configurations.  Defaults to "$CONFIGS".
+            space-separated list of configurations.  May be supplied multiple
+            times.  Defaults to "$DEFAULT_CONFIGS".
 
         -h
             Display this help message.
@@ -36,6 +37,7 @@ EOF
   exit 1;
 }
 
+CONFIGS=""
 SHORT_FLAG="-s"
 NO_MAKE=0
 QUIET=0
@@ -45,7 +47,7 @@ while getopts "c:hlMpq" OPTION
 do
   case $OPTION in
     c)
-      CONFIGS=$OPTARG
+      CONFIGS="$CONFIGS $OPTARG"
       ;;
     h)
       usage
@@ -67,8 +69,14 @@ done
 
 shift $(($OPTIND - 1))
 
+# Set the user's benchmarks, if supplied.
 if [ "$#" != "0" ]; then
   BENCHMARKS=$@
+fi
+
+# Set the default configuration, unless the user supplied some.
+if [ -z "$CONFIGS" ]; then
+  CONFIGS=$DEFAULT_CONFIGS;
 fi
 
 ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
