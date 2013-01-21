@@ -74,8 +74,8 @@ namespace sprite
       #endif
 
       #if SPRITE_REFCNT
-        // Note: It's not clear why this must be set.  The memory either from
-        // the system (for new memory) or a reused node that was reclaimed
+        // Note: It's not clear why this must be set.  The memory is either
+        // new, zero-initialized memory or a reused node that was reclaimed
         // (with a count of zero).
         reinterpret_cast<Node *>(p)->refcnt = 0;
       #endif
