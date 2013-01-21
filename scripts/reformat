@@ -1,0 +1,43 @@
+#!/usr/bin/perl -pi -l
+
+# A source reformatter.
+#
+# Sprite makes heavy use of macro expansions.  This can place a lot of code on
+# one line, which compliates debugging.  A simple solution is to run a source
+# reformatter on the preprocessed code.  Unfortunately, off-the-shelf programs
+# like indent generate illegal code that the compiler rejects.
+#
+# This program is a very simple (and dumb) source reformatter.  It inserts a
+# newline after every occurrence of an open- or close brace, or semicolon,
+# except when that occurrence is inside of a string literal.  There are a few
+# additional rules intended to improve the appearance of the output.
+
+
+# Skip lines containing only ;{} and whitespace.
+next if m/^[\s;\{\}]*$/;
+
+
+# The separator is a newline followed by the prefixed whitespace.
+m/^([ \t]*)/;
+my $sep = "\n$1";
+
+
+# Split into chunks where a newline is needed.
+my @chunks = ();
+push @chunks, $1
+  while m{
+      (                                       # Capture...
+          \s*[\{\}]                           # A single { or }
+        | (?:                                 # or...
+              [^;\{\}\"]*                     # a string not containing ;{}"
+              (?:"[^\"\\]*(?:\\.[^\"\\]*)*")? # followed by an optional string literal
+            )*                                # zero or more times
+          (?:[\{\}]$)?                        # followed by an optional end-of-line { or }
+          ;?                                  # plus an optional ;
+        )\s*                                  # (then discard trailing whitespace)
+    }gx;
+
+
+# Interleave newlines and indent between the chunks.
+if(!$chunks[-1]) { pop @chunks; }
+$_ = join($sep, @chunks);
