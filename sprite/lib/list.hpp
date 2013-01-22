@@ -19,6 +19,16 @@ namespace sprite { namespace lib
   STATIC_NODE(nil, Nil);
 
 
+  // length []     = 0
+  // length (_:xs) = 1 + length xs
+  OPERATION(length, "length", 1
+	  , (DT_BRANCH, RDX[0], SPRITE_LIB_List
+	      , (DT_LEAF, REWRITE(IntNode, 0L))
+	      , (DT_LEAF, REWRITE(AddNode, i1, NODE(length, IND[1])))
+        )
+    )
+
+
   // [] ++ ys = ys
   // (x:xs) ++ ys = x : xs++ys
   OPERATION(append, "++", 2
