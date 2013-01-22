@@ -19,9 +19,9 @@ namespace sprite { namespace lib
   STATIC_NODE(nil, Nil);
 
 
-  // append [] xs = xs
-  // append (x:xs) ys = x : (append xs ys)
-  OPERATION(append, "append", 2
+  // [] ++ ys = ys
+  // (x:xs) ++ ys = x : xs++ys
+  OPERATION(append, "++", 2
     , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
         , (DT_LEAF, REWRITE(Cons, IND[0], NODE(append, IND[1], RDX[1])))
@@ -167,6 +167,61 @@ namespace sprite { namespace lib
                 , REWRITE(FwdNode, IND[0])
                 , REWRITE(indexp, IND[1], NODE(SubNode, RDX[1], i1))
                 )
+            )
+        )
+    )
+
+
+  // (.)   :: (b -> c) -> (a -> b) -> (a -> c)
+  // f . g = \x -> f (g x)
+  struct auxcomp;
+
+  // ??? FwdNode is a workaround !!!
+  OPERATION(compose, ".", 2
+    , (DT_LEAF, REWRITE(FwdNode, NODE(PARTIAL(auxcomp,2), RDX[0], RDX[1])))
+    )
+
+  // auxcomp f g x = f(g(x))
+  // ??? FwdNode is a workaround !!!
+  OPERATION(auxcomp, "auxcomp", 3
+    , (DT_LEAF, REWRITE(FwdNode, APPLY(RDX[0], APPLY(RDX[1],RDX[2]))))
+    )
+
+
+  // foldr            :: (a->b->b) -> b -> [a] -> b
+  // foldr _ z []     = z
+  // foldr f z (x:xs) = f x (foldr f z xs)
+  OPERATION(foldr, "foldr", 3
+    , (DT_BRANCH, RDX[2], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
+        // ??? FwdNode is a workaround !!!
+        , (DT_LEAF
+            , REWRITE(
+                  FwdNode
+                , APPLY(
+                      APPLY(RDX[0],IND[0]), NODE(foldr, RDX[0], RDX[1], IND[1])
+                    )
+                )
+            )
+        )
+    )
+
+
+  // concat            :: [[a]] -> [a]
+  // concat l          = foldr (++) [] l
+  OPERATION(concat, "concat", 1
+    , (DT_LEAF, REWRITE(foldr, NODE(PARTIAL(append,0)), nil, RDX[0]))
+    )
+  
+
+  // concatMap         :: (a -> [b]) -> [a] -> [b]
+  // concatMap f       = concat . map f
+  OPERATION(concatMap, "concatMap", 1
+    , (DT_LEAF
+        , REWRITE(
+              compose
+            , NODE(PARTIAL(concat,0))
+            , NODE(PARTIAL(map,1), RDX[0])
             )
         )
     )

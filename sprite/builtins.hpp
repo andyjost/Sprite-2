@@ -48,6 +48,9 @@ namespace sprite
     #endif
   };
 
+  namespace lib { using sprite::IntNode; }
+
+
   // ==== Bool ====
   struct BoolNode;
   bool check_bool(NodePtr const & x);
@@ -84,6 +87,13 @@ namespace sprite
 
   inline bool check_bool(NodePtr const & x)
     { return dynamic_cast<BoolNode *>(get(x)); }
+
+  namespace lib { using sprite::BoolNode; }
+
+  // This type is manually-defined (i.e., it is not passed to TYPE).  Both
+  // branches are the same type (BoolNode) but have different values.
+  #define SPRITE_LIB_Bool (lib, ((BoolNode, "False", 0))((BoolNode, "True", 0)))
+
 
   // ==== Fwd ====
   struct FwdNode : Node

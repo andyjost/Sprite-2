@@ -8,6 +8,7 @@
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/size_t.hpp>
 #include <boost/utility.hpp>
+#include <boost/type_traits/is_integral.hpp>
 
 #if SPRITE_REFCNT
 #include <boost/intrusive_ptr.hpp>
@@ -16,8 +17,10 @@
 namespace sprite
 {
   namespace mpl = boost::mpl;
+  using boost::enable_if;
   using boost::enable_if_c;
   using boost::disable_if_c;
+  using boost::is_integral;
 
   struct NodeH;
 
@@ -270,8 +273,12 @@ namespace sprite
   BOOST_PP_REPEAT(SPRITE_ARITY_BOUND,F,)
   #undef F
 
-  template<typename TgtType>
-  inline void rewrite(int64 value)
+  // For built-in Int and Bool types.
+  template<typename TgtType, typename ArgType>
+  inline void rewrite(
+      ArgType value
+    , typename enable_if<is_integral<ArgType> >::type* =0
+    )
   {
     g_redex->~Node(); // optimized away if no dtor
     new(g_redex) TgtType(value);
