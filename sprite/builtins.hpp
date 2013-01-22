@@ -109,45 +109,29 @@ namespace sprite
   };
 
   // ==== Math Operations ====
-  #define SPRITE_MATH_DECL(name, op)                                    \
-      struct name : Node                                                \
-      {                                                                 \
-        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)                  \
-        virtual void N() { H(); }                                       \
-        virtual void H()                                                \
-        {                                                               \
-          (*this)[0]->H(); (*this)[1]->H();                             \
-          g_redex = this;                                               \
-          rewrite<IntNode>((*this)[0]->value() op (*this)[1]->value()); \
-        }                                                               \
-      };                                                                \
+  #define SPRITE_BINOP_DECL(name, type, op)                          \
+      struct name : Node                                             \
+      {                                                              \
+        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)               \
+        virtual void N() { H(); }                                    \
+        virtual void H()                                             \
+        {                                                            \
+          (*this)[0]->H(); (*this)[1]->H();                          \
+          g_redex = this;                                            \
+          rewrite<type>((*this)[0]->value() op (*this)[1]->value()); \
+        }                                                            \
+      };                                                             \
     /**/
   
-  SPRITE_MATH_DECL(AddNode, +)
-  SPRITE_MATH_DECL(SubNode, -)
-  SPRITE_MATH_DECL(MulNode, *)
-  SPRITE_MATH_DECL(DivNode, /)
-  SPRITE_MATH_DECL(ModNode, %)
-
-  // ==== Comparison Operations ====
-  #define SPRITE_CMP_DECL(name, op)                                      \
-      struct name : Node                                                 \
-      {                                                                  \
-        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)                   \
-        virtual void N() { H(); }                                        \
-        virtual void H()                                                 \
-        {                                                                \
-          (*this)[0]->H(); (*this)[1]->H();                              \
-          g_redex = this;                                                \
-          rewrite<BoolNode>((*this)[0]->value() op (*this)[1]->value()); \
-        }                                                                \
-      };                                                                 \
-    /**/
-  SPRITE_CMP_DECL(LtNode, <)
-  SPRITE_CMP_DECL(GtNode, >)
-  SPRITE_CMP_DECL(LeNode, <=)
-  SPRITE_CMP_DECL(GeNode, >=)
-  SPRITE_CMP_DECL(EqNode, ==)
-  SPRITE_CMP_DECL(NeNode, !=)
-
+  SPRITE_BINOP_DECL(AddNode, IntNode, +)
+  SPRITE_BINOP_DECL(SubNode, IntNode, -)
+  SPRITE_BINOP_DECL(MulNode, IntNode, *)
+  SPRITE_BINOP_DECL(DivNode, IntNode, /)
+  SPRITE_BINOP_DECL(ModNode, IntNode, %)
+  SPRITE_BINOP_DECL(LtNode, BoolNode, <)
+  SPRITE_BINOP_DECL(GtNode, BoolNode, >)
+  SPRITE_BINOP_DECL(LeNode, BoolNode, <=)
+  SPRITE_BINOP_DECL(GeNode, BoolNode, >=)
+  SPRITE_BINOP_DECL(EqNode, BoolNode, ==)
+  SPRITE_BINOP_DECL(NeNode, BoolNode, !=)
 }
