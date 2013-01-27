@@ -27,6 +27,32 @@ namespace sprite
     #endif
   };
 
+
+  // ==== Fwd ====
+  struct FwdNode : Node
+  {
+    NodePtr dest;
+    FwdNode(NodePtr const & dest_) : Node(FWD), dest(dest_) {}
+    virtual ~FwdNode() {}
+    static std::string static_name() { return "FwdNode"; }
+    virtual std::string name() { return static_name(); }
+    virtual void show() { dest->show(); }
+    virtual void N() { dest->N(); }
+    virtual void H() { dest->H(); }
+    virtual int64 value() { return dest->value(); }
+    virtual size_t arity() const { return 0; }
+    virtual Node * apply_(Node * arg) { return dest->apply_(arg); }
+    #if SPRITE_GC
+      virtual iterator begin()
+        { return reinterpret_cast<iterator>(&dest); }
+      virtual iterator end() { return begin() + 1; }
+      virtual const_iterator begin() const
+        { return reinterpret_cast<const_iterator>(&dest); }
+      virtual const_iterator end() const { return begin() + 1; }
+    #endif
+  };
+
+
   // ==== Int ====
   struct IntNode : Node
   {
@@ -53,6 +79,7 @@ namespace sprite
 
   // ==== Bool ====
   struct BoolNode;
+
   bool check_bool(NodePtr const & x);
 
   inline bool is_false(NodePtr const & x)
@@ -64,7 +91,7 @@ namespace sprite
   inline bool is_true(NodePtr const & x)
   {
     assert(check_bool(x));
-    return x->tag == (CTOR+1);
+    return x->tag == CTOR+1;
   }
 
   struct BoolNode : Node
@@ -92,31 +119,10 @@ namespace sprite
 
   // This type is manually-defined (i.e., it is not passed to TYPE).  Both
   // branches are the same type (BoolNode) but have different values.
-  #define SPRITE_LIB_Bool (lib, ((BoolNode, "False", 0))((BoolNode, "True", 0)))
+  #define SPRITE_LIB_Bool                                    \
+      (lib, ((BoolNode, "False", 0))((BoolNode, "True", 0))) \
+    /**/
 
-
-  // ==== Fwd ====
-  struct FwdNode : Node
-  {
-    NodePtr dest;
-    FwdNode(NodePtr const & dest_) : Node(FWD), dest(dest_) {}
-    virtual ~FwdNode() {}
-    static std::string static_name() { return "FwdNode"; }
-    virtual std::string name() { return static_name(); }
-    virtual void show() { dest->show(); }
-    virtual void N() { dest->N(); }
-    virtual void H() { dest->H(); }
-    virtual int64 value() { return dest->value(); }
-    virtual size_t arity() const { return 0; }
-    #if SPRITE_GC
-      virtual iterator begin()
-        { return reinterpret_cast<iterator>(&dest); }
-      virtual iterator end() { return begin() + 1; }
-      virtual const_iterator begin() const
-        { return reinterpret_cast<const_iterator>(&dest); }
-      virtual const_iterator end() const { return begin() + 1; }
-    #endif
-  };
 
   // ==== Math Operations ====
   #define SPRITE_BINOP_DECL(name, type, op)                          \

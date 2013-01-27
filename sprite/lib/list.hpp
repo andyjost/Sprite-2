@@ -3,7 +3,7 @@
  */
 
 #pragma once
-#include "sprite/sprite.hpp"
+#include "sprite/lib/functional.hpp"
 #include "sprite/lib/int.hpp"
 
 namespace sprite { namespace lib
@@ -119,13 +119,13 @@ namespace sprite { namespace lib
         , (DT_LEAF
             , REWRITE(
                   Cons
-                , APPLY(RDX[0], IND[0])
+                , NODE(apply, RDX[0], IND[0])
                 , NODE(map,  RDX[0], IND[1])
                 )
             )
         )
     )
-
+  
 
   // filter _ []       = []
   // filter p (x:xs)   = if p x then x : filter p xs
@@ -135,7 +135,7 @@ namespace sprite { namespace lib
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
             , COND(
-                  APPLY(RDX[0], IND[0])
+                  NODE(apply, RDX[0], IND[0])
                 , REWRITE(Cons, IND[0], NODE(filter, RDX[0], IND[1]))
                 , REWRITE(filter, RDX[0], IND[1])
                 )
@@ -148,7 +148,7 @@ namespace sprite { namespace lib
   OPERATION(iterate, "iterate", 2
     , (DT_LEAF
         , REWRITE(
-              Cons, RDX[1], NODE(iterate, RDX[0], APPLY(RDX[0],RDX[1]))
+              Cons, RDX[1], NODE(iterate, RDX[0], NODE(apply,RDX[0],RDX[1]))
             )
         )
     )
@@ -182,35 +182,17 @@ namespace sprite { namespace lib
     )
 
 
-  // (.)   :: (b -> c) -> (a -> b) -> (a -> c)
-  // f . g = \x -> f (g x)
-  struct auxcomp;
-
-  // ??? FwdNode is a workaround !!!
-  OPERATION(compose, ".", 2
-    , (DT_LEAF, REWRITE(FwdNode, NODE(PARTIAL(auxcomp,2), RDX[0], RDX[1])))
-    )
-
-  // auxcomp f g x = f(g(x))
-  // ??? FwdNode is a workaround !!!
-  OPERATION(auxcomp, "auxcomp", 3
-    , (DT_LEAF, REWRITE(FwdNode, APPLY(RDX[0], APPLY(RDX[1],RDX[2]))))
-    )
-
-
   // foldr            :: (a->b->b) -> b -> [a] -> b
   // foldr _ z []     = z
   // foldr f z (x:xs) = f x (foldr f z xs)
   OPERATION(foldr, "foldr", 3
     , (DT_BRANCH, RDX[2], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
-        // ??? FwdNode is a workaround !!!
         , (DT_LEAF
             , REWRITE(
-                  FwdNode
-                , APPLY(
-                      APPLY(RDX[0],IND[0]), NODE(foldr, RDX[0], RDX[1], IND[1])
-                    )
+                  apply
+                , NODE(apply, RDX[0], IND[0])
+                , NODE(foldr, RDX[0], RDX[1], IND[1])
                 )
             )
         )

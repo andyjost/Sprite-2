@@ -61,7 +61,6 @@ namespace sprite { namespace module { namespace primes
 
 
   OPERATION(MainNode, "main", 0
-    // , (DT_LEAF, REWRITE(lib::index, NODE(primes), NODE(IntNode, 5500)))
-    , (DT_LEAF, REWRITE(lib::index, NODE(primes), NODE(IntNode, 1)))
+    , (DT_LEAF, REWRITE(lib::index, NODE(primes), NODE(IntNode, 5500)))
     )
 }}}

@@ -84,7 +84,15 @@ namespace sprite
   typedef unsigned char mark_type;
   
   struct RuntimeError : std::exception
-    { virtual char const * what() const throw() { return "Runtime error"; } };
+  {
+    RuntimeError(std::string const & msg = std::string())
+      : m_msg("Runtime error: " + msg)
+    {}
+    virtual char const * what() const throw() { return m_msg.c_str(); }
+    virtual ~RuntimeError() throw() {}
+  private:
+    std::string m_msg;
+  };
 
   // The node requires space for 2 pointers (vptr + tag fields) plus
   // extra to hold the children.  The extra space must be at least one

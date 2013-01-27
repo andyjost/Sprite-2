@@ -8,13 +8,13 @@
 namespace sprite { namespace lib
 {
 
-  // The Boolean type.
-  // #define PRELUDE_LIB_Bool (lib, ((true_, "True", 0))((false_, "False", 0)))
-  // TYPE(PRELUDE_LIB_Bool)
+  // The Boolean type is defined with the built-ins.
 
-  // The static constant expression true and false.
+
+  // The static constant expressions true and false.
   STATIC_NODE(true_, BoolNode, true);
   STATIC_NODE(false_, BoolNode, false);
+
 
   // False && _ = False
   // True && x = x

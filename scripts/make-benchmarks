@@ -102,8 +102,16 @@ int main()
   using namespace sprite;
   using sprite::root;
   root = new module::$BENCHMARK_NAME::MainNode();
-  root->N();
-  root->show();
+  try
+  {
+    root->N();
+    root->show();
+  }
+  catch(std::exception const & e)
+  {
+    std::cout << "\n" << e.what() << std::endl;
+    return 1;
+  }
   std::cout << std::endl;
   return 0;
 }

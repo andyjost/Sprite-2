@@ -37,7 +37,7 @@ namespace sprite { namespace module { namespace queens
   using namespace sprite;
   using lib::constants::i0;
   using lib::constants::i1;
-  using lib::constants::i8;
+  using lib::constants::i10;
 
   // safe _ _ []    = True
   // safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
@@ -95,26 +95,20 @@ namespace sprite { namespace module { namespace queens
             , REWRITE(lib::Cons, lib::nil, lib::nil)
             , REWRITE(lib::filter
                 , NODE(PARTIAL(lambda_0,0))
-                , NODE(lib::concat
-                    , NODE(lib::map
-                        , NODE(PARTIAL(lambda_1,1), RDX[0])
-                        , NODE(gen, RDX[0], NODE(SubNode, RDX[1], i1))
-                        )
+                , NODE(lib::apply
+                    , NODE(lib::concatMap, NODE(PARTIAL(lambda_1,1), RDX[0]))
+                    , NODE(gen, RDX[0], NODE(SubNode, RDX[1], i1))
                     )
                 )
             )
         )
     )
 
-  /*
-    // Next should equivalent to above, but instead it crashes !!!
-  , APPLY(NODE(concatMap, NODE((Partial<lambda_1,1>), RDX[0]))
-    , NODE(gen, RDX[0], NODE(SubNode, RDX[1], i1)))))))
-  */
 
   OPERATION(nsoln, "nsoln", 1
     , (DT_LEAF, REWRITE(lib::length, NODE(gen, RDX[0], RDX[0])))
     )
 
-  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(nsoln, i8)))
+
+  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(nsoln, i10)))
 }}}

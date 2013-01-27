@@ -43,7 +43,10 @@ namespace sprite
     virtual void H() = 0;
     virtual int64 value() { throw RuntimeError(); }
     virtual size_t arity() const = 0;
-    virtual Node * apply(Node * arg) { throw RuntimeError(); }
+    // The trailing underscore avoids a confusion between Node::apply and
+    // lib::apply, when unqualified names are used.
+    virtual Node * apply_(Node * arg)
+      { throw RuntimeError("error applying " + this->name());  }
   
     tag_type tag;
 
@@ -167,12 +170,15 @@ namespace sprite
     Node * get(Node * ptr) { return ptr; }
   #endif
 
-  // A freestanding apply function.
-  inline NodePtr apply(NodePtr const & func, NodePtr const & arg)
-    { return func->apply(get(arg)); }
+  namespace detail
+  {
+    // A freestanding apply function.
+    inline NodePtr apply(NodePtr const & func, NodePtr const & arg)
+      { return func->apply_(get(arg)); }
 
-  inline NodePtr apply(Node & func, NodePtr const & arg)
-    { return func.apply(get(arg)); }
+    inline NodePtr apply(Node & func, NodePtr const & arg)
+      { return func.apply_(get(arg)); }
+  }
 
   /**
    * @brief Primarty template declaration for partial nodes.
@@ -190,9 +196,13 @@ namespace sprite
    */
   template<typename CompleteType, size_t NumBound> struct Partial;
 
-  /// Copies successors from the source to destination.  
+  /**
+   * @brief Copies successors from the source to destination, and initializes
+   * the destination.
+   */
+
   template<typename T, typename U>
-  void copy_successors(T * dst, U * src
+  void uninitialized_copy(T * dst, U * src
     , typename enable_if_c<
           (T::arity_value::value > 0 && U::arity_value::value > 0)
         >::type* = 0
@@ -201,11 +211,13 @@ namespace sprite
     // TODO - Use SIMD and static unrolling.
     BOOST_STATIC_ASSERT(T::arity_value::value >= U::arity_value::value);
     for(size_t i=0; i<U::arity_value::value; ++i)
-      { (*dst)[i] = (*src)[i]; }
+      { new(&(*dst)[i]) NodePtr((*src)[i]); }
+      // { (*dst)[i] = (*src)[i]; }
   }
 
+  /// Special case when there is nothing to do.
   template<typename T, typename U>
-  void copy_successors(T * dst, U * src
+  void uninitialized_copy(T * dst, U * src
     , typename disable_if_c<
           (T::arity_value::value > 0 && U::arity_value::value > 0)
         >::type* = 0
@@ -245,7 +257,6 @@ namespace sprite
     private:
       NodePtr px;
     };
-  #else
   #endif
 
   /// Global pointer to the root of the goal expression (used for tracing).
@@ -296,8 +307,10 @@ namespace sprite
 // the node when done.
 #if SPRITE_GC
 #define NODE(type, ...) LockedPtr(new type(__VA_ARGS__))
+#define LOCAL_NODE(name, type, ...) LockedPtr name(new type(__VA_ARGS__))
 #else
 #define NODE(type, ...) new type(__VA_ARGS__)
+#define LOCAL_NODE(name, type, ...) Node * name(new type(__VA_ARGS__))
 #endif
 
 // Constructs a new node that is never reclaimed.
@@ -308,12 +321,12 @@ namespace sprite
 
 // Performs application to a partially-bound call.
 #if SPRITE_GC
-#define APPLY(func,arg) LockedPtr(sprite::apply(func,arg))
+#define APPLY(func,arg) LockedPtr(sprite::detail::apply(func,arg))
 #else
-#define APPLY(func,arg) sprite::apply(func,arg)
+#define APPLY(func,arg) sprite::detail::apply(func,arg)
 #endif
 
-// Forms the type name of a partial application type.
+// Forms the type name of a partial application object.
 #define PARTIAL(op,nbound) (Partial<op,nbound>)
 
 // Performs a conditional rewrite at the current redex.  expr must be a node
@@ -328,13 +341,13 @@ namespace sprite
 // ----
 
 // Defines a constructor node.
-#define CONSTRUCTOR(ident, label, arity, id)                  \
-    struct ident : Node                                       \
-    {                                                         \
-      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, id)    \
-      virtual void N() { BOOST_PP_REPEAT(arity,CTOR_I,) }     \
-      virtual void H() {}                                     \
-    };                                                        \
+#define CONSTRUCTOR(ident, label, arity, id)                                  \
+    struct ident : Node                                                       \
+    {                                                                         \
+      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, id)                    \
+      virtual void N() { BOOST_PP_REPEAT(arity,CTOR_I,) }                     \
+      virtual void H() {}                                                     \
+    };                                                                        \
   /**/
 // Note: this macro is also used in partial.hpp.
 #define CTOR_I(z,n,_) (*this)[n]->N();
@@ -342,15 +355,15 @@ namespace sprite
 // ----
 
 // Defines an operation node.
-#define OPERATION(ident, label, arity, dtree)                 \
-    struct ident : Node                                       \
-    {                                                         \
-      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, OPER)  \
-      virtual void N() { g_redex = this; dt(); N(); }         \
-      virtual void H() { g_redex = this; dt(); H(); }         \
-    private:                                                  \
-      __attribute__((noinline)) DEFINITIONAL_TREE dtree       \
-    };                                                        \
+#define OPERATION(ident, label, arity, dtree)                        \
+    struct ident : Node                                              \
+    {                                                                \
+      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, OPER)         \
+      virtual void N() { g_redex = this; dt(); N(); }                \
+      virtual void H() { g_redex = this; dt(); H(); }                \
+    private:                                                         \
+      __attribute__((noinline)) DEFINITIONAL_TREE dtree              \
+    };                                                               \
   /**/
 
 // Performs a virtual call through a vtable.
@@ -470,7 +483,7 @@ namespace sprite
       : Node(tag)                                                      \
     {                                                                  \
       SPRITE_ALLOC_##mode(arity)                                       \
-      copy_successors(this, part);                                     \
+      uninitialized_copy(this, part);                                  \
       BOOST_PP_REPEAT_FROM_TO(                                         \
           BOOST_PP_SUB(arity,1),arity,SPRITE_INIT_CHILD,               \
         )                                                              \
@@ -485,6 +498,7 @@ namespace sprite
 
 namespace sprite
 {
+  // The Partial type.
   #define F(z,n,_)                                        \
       template<typename CompleteType>                     \
       struct Partial<CompleteType,n> : Node               \
@@ -496,7 +510,7 @@ namespace sprite
           )                                               \
         virtual void N() { BOOST_PP_REPEAT(n,CTOR_I,) }   \
         virtual void H() {}                               \
-        virtual Node * apply(Node * arg)                  \
+        virtual Node * apply_(Node * arg)                 \
         {                                                 \
           typedef typename                                \
               mpl::if_c<                                  \

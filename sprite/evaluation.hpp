@@ -33,11 +33,28 @@ namespace sprite
   template<typename NodeType> inline NodeType & ind()
     { return *static_cast<NodeType *>(g_inductive); }
 
+  namespace lib
+  {
+    // test True = True
+    // test False = False
+    // -- Tests the true/false value of x and forces the result to be exactly
+    // -- True or False (e.g., removes Fwd nodes).
+    OPERATION(test, "test", 1
+      , (DT_BRANCH, RDX[0], SPRITE_LIB_Bool
+          , (DT_LEAF, REWRITE(BoolNode, false))
+          , (DT_LEAF, REWRITE(BoolNode, true))
+          )
+      )
+  }
+
   inline bool cond(NodePtr const & expr)
   {
-    Node * save = g_redex;
-    expr->N();
-    g_redex = save;
-    return is_true(expr);
+    Node * redex = g_redex;
+    Node * inductive = g_inductive;
+    LOCAL_NODE(tmp, lib::test, expr);
+    tmp->N();
+    g_redex = redex;
+    g_inductive = inductive;
+    return is_true(tmp);
   }
 }
