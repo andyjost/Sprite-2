@@ -33,13 +33,4 @@ namespace sprite { namespace lib
 	      , (DT_LEAF, REWRITE(BoolNode, false))
         )
     )
-
-  // if False then _ else y = y
-  // if True  then x else _ = x
-  OPERATION(ifThenElse, "ifThenElse", 3
-    , (DT_BRANCH, RDX[0], SPRITE_LIB_Bool
-	      , (DT_LEAF, REWRITE(FwdNode, RDX[2]))
-	      , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
-        )
-    )
 }}

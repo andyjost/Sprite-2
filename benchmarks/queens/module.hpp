@@ -90,10 +90,11 @@ namespace sprite { namespace module { namespace queens
   // else filter lambda_0 (concatMap (lambda_1 r) (gen r (l-1)))
   OPERATION(gen, "gen", 2
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(EqNode, RDX[1], i0)
-            , REWRITE(lib::Cons, lib::nil, lib::nil)
-            , REWRITE(lib::filter
+            , THEN(lib::Cons, lib::nil, lib::nil)
+            , ELSE(
+                  lib::filter
                 , NODE(PARTIAL(lambda_0,0))
                 , NODE(lib::apply
                     , NODE(lib::concatMap, NODE(PARTIAL(lambda_1,1), RDX[0]))

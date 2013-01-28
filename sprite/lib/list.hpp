@@ -71,10 +71,11 @@ namespace sprite { namespace lib
   // denoted as [n..m]
   OPERATION(enumFromTo, "enumFromTo", 2
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(GtNode, RDX[0], RDX[1])
-            , REWRITE(Nil)
-            , REWRITE(Cons, RDX[0]
+            , THEN(Nil)
+            , ELSE(
+                  Cons, RDX[0]
                 , NODE(enumFromTo, NODE(AddNode, RDX[0], i1), RDX[1])
                 )
             )
@@ -90,10 +91,10 @@ namespace sprite { namespace lib
 
   OPERATION(take, "take", 2
     , (DT_LEAF 
-        , COND(
+        , IF(
               NODE(LeNode, RDX[0], i0)
-            , REWRITE(Nil)
-            , REWRITE(takep, RDX[0], RDX[1])
+            , THEN(Nil)
+            , ELSE(takep, RDX[0], RDX[1])
             )
         )
     )
@@ -134,10 +135,10 @@ namespace sprite { namespace lib
     , (DT_BRANCH, RDX[1], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(Nil))
         , (DT_LEAF
-            , COND(
+            , IF(
                   NODE(apply, RDX[0], IND[0])
-                , REWRITE(Cons, IND[0], NODE(filter, RDX[0], IND[1]))
-                , REWRITE(filter, RDX[0], IND[1])
+                , THEN(Cons, IND[0], NODE(filter, RDX[0], IND[1]))
+                , ELSE(filter, RDX[0], IND[1])
                 )
             )
         )
@@ -160,10 +161,10 @@ namespace sprite { namespace lib
 
   OPERATION(index, "index", 2
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(LtNode, RDX[1], i0)
-            , REWRITE(FailNode)
-            , REWRITE(indexp, RDX[0], RDX[1])
+            , THEN(FailNode)
+            , ELSE(indexp, RDX[0], RDX[1])
             )
         )
     )
@@ -172,10 +173,10 @@ namespace sprite { namespace lib
     , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , DT_EXEMPT
         , (DT_LEAF
-            , COND(
+            , IF(
                   NODE(EqNode, RDX[1], i0)
-                , REWRITE(FwdNode, IND[0])
-                , REWRITE(indexp, IND[1], NODE(SubNode, RDX[1], i1))
+                , THEN(FwdNode, IND[0])
+                , ELSE(indexp, IND[1], NODE(SubNode, RDX[1], i1))
                 )
             )
         )

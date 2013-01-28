@@ -67,13 +67,13 @@ namespace sprite { namespace module { namespace tree_insert
     , (DT_BRANCH, RDX[1], MODULE_11tree_insert_TP_4Tree
         , (DT_LEAF, REWRITE(Branch, RDX[0], leaf, leaf))
         , (DT_LEAF
-            , COND(
+            , IF(
                   NODE(LtNode, RDX[0], IND[0])
-                , REWRITE(Branch, IND[0], NODE(InsertNode, RDX[0], IND[1]), IND[2])
-                , COND(
+                , THEN(Branch, IND[0], NODE(InsertNode, RDX[0], IND[1]), IND[2])
+                , ELIF(
                       NODE(LtNode, IND[0], RDX[0])
-                    , REWRITE(Branch, IND[0], IND[1], NODE(InsertNode, RDX[0], IND[2]))
-                    , REWRITE(Branch, IND[0], IND[1], IND[2])
+                    , THEN(Branch, IND[0], IND[1], NODE(InsertNode, RDX[0], IND[2]))
+                    , ELSE(Branch, IND[0], IND[1], IND[2])
                     )
                 )
             )
@@ -83,10 +83,11 @@ namespace sprite { namespace module { namespace tree_insert
   // ====== tree_loop ======
   OPERATION(TreeLoopNode, "tree_loop", 3
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(EqNode, RDX[0], i0)
-            , REWRITE(FwdNode, RDX[2])
-            , REWRITE(TreeLoopNode
+            , THEN(FwdNode, RDX[2])
+            , ELSE(
+                  TreeLoopNode
                 , NODE(SubNode, RDX[0], i1)
                 , NODE(RndNode, RDX[1])
                 , NODE(InsertNode, NODE(ModNode, RDX[1], modval), RDX[2])

@@ -17,10 +17,10 @@ namespace sprite { namespace module { namespace rfib
 
   OPERATION(NFibNode, "nfib", 1
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(LeNode, RDX[0], i1)
-            , REWRITE(IntNode, 1)
-            , REWRITE(
+            , THEN(IntNode, 1)
+            , ELSE(
                   AddNode
                 , NODE(
                       AddNode

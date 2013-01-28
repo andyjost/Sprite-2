@@ -58,3 +58,7 @@ options to the compiler.  They are:
               Trace every mark made during the MARK phase of collection.  Also
               does everything a value of 1 would do.
 
+  SPRITE_OPTIMIZE_IF_EXPR
+      Enables special handling of if-then-else expressions to improve
+      performance.
+

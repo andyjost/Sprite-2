@@ -51,13 +51,10 @@ namespace sprite { namespace module { namespace exp3_8
 
   OPERATION(FromIntegerNode, "fromInteger", 1
     , (DT_LEAF
-        , COND(
+        , IF(
               NODE(LtNode, RDX[0], i1)
-            , REWRITE(Zero)
-            , REWRITE(
-                  Succ
-                , NODE(FromIntegerNode, NODE(SubNode, RDX[0], i1))
-                )
+            , THEN(Zero)
+            , ELSE(Succ, NODE(FromIntegerNode, NODE(SubNode, RDX[0], i1)))
             )
         )
     )

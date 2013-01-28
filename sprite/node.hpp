@@ -212,7 +212,6 @@ namespace sprite
     BOOST_STATIC_ASSERT(T::arity_value::value >= U::arity_value::value);
     for(size_t i=0; i<U::arity_value::value; ++i)
       { new(&(*dst)[i]) NodePtr((*src)[i]); }
-      // { (*dst)[i] = (*src)[i]; }
   }
 
   /// Special case when there is nothing to do.
@@ -295,6 +294,17 @@ namespace sprite
     new(g_redex) TgtType(value);
     trace();
   }
+
+  // This construct function (as opposed to new) is needed when working with
+  // mutually-recursive operations.  Is is legal to say construct<T>(...) but
+  // not new T(...) when T is an incomplete type.
+  #define F(z,n,_)                                                        \
+      template<typename T BOOST_PP_ENUM_TRAILING_PARAMS(n, typename U)>   \
+      inline Node * construct(BOOST_PP_ENUM_BINARY_PARAMS(n,U,const & u)) \
+        { return new T(BOOST_PP_ENUM_PARAMS(n, u)); }                     \
+    /**/
+  BOOST_PP_REPEAT(SPRITE_ARITY_BOUND,F,)
+  #undef F
 }
 
 // References the current redex.
@@ -306,15 +316,21 @@ namespace sprite
 // Constructs a new node.  If using garbage collection, use LockedPtr to unlock
 // the node when done.
 #if SPRITE_GC
-#define NODE(type, ...) LockedPtr(new type(__VA_ARGS__))
-#define LOCAL_NODE(name, type, ...) LockedPtr name(new type(__VA_ARGS__))
+  #define NODE(type, ...) LockedPtr(sprite::construct<type>(__VA_ARGS__))
+  #define LOCAL_NODE(name, type, ...)                      \
+      LockedPtr name(sprite::construct<type>(__VA_ARGS__)) \
+    /**/
 #else
-#define NODE(type, ...) new type(__VA_ARGS__)
-#define LOCAL_NODE(name, type, ...) Node * name(new type(__VA_ARGS__))
+  #define NODE(type, ...) sprite::construct<type>(__VA_ARGS__)
+  #define LOCAL_NODE(name, type, ...)                   \
+      Node * name(sprite::construct<type>(__VA_ARGS__)) \
+    /**/
 #endif
 
 // Constructs a new node that is never reclaimed.
-#define STATIC_NODE(name, type, ...) NodePtr name = new type(__VA_ARGS__)
+#define STATIC_NODE(name, type, ...)                    \
+    NodePtr name = sprite::construct<type>(__VA_ARGS__) \
+  /**/
 
 // Performs a rewrite at the current redex.
 #define REWRITE(type, ...) rewrite<type>(__VA_ARGS__);
@@ -327,12 +343,25 @@ namespace sprite
 #endif
 
 // Forms the type name of a partial application object.
-#define PARTIAL(op,nbound) (Partial<op,nbound>)
+#define PARTIAL(op,nbound) Partial<op,nbound>
 
 // Performs a conditional rewrite at the current redex.  expr must be a node
 // heading an expression that reduces to a Boolean result.
-#define COND(expr,true_,false_)              \
-    if(cond(expr)) { true_ } else { false_ } \
+#ifdef SPRITE_OPTIMIZE_IF_EXPR
+  #define IF(expr, true_, false_)              \
+      if(cond(expr)) { true_ } else { false_ } \
+    /**/
+  #define THEN REWRITE
+  #define ELSE REWRITE
+  #define ELIF IF
+#else
+  #define IF(expr, true_, false_)                   \
+      REWRITE(lib::ifThenElse, expr, true_, false_) \
+    /**/
+  #define THEN NODE
+  #define ELSE NODE
+  #define ELIF(expr,true_,false_) NODE(lib::ifThenElse, expr, true_, false_)
+#endif
 
 // Handles an exempt node.  For convenience, this simply expands to a leaf that
 // rewrite to fail.
