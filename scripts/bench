@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BENCHMARKS="reverse tak rfib exp3_8 tree_insert tree_insert_32 primes queens"
+BENCHMARKS="reverse tak rfib exp3_8 tree_insert tree_insert_32 primes queens wheel_sieve1"
 DEFAULT_CONFIGS="refcnt-opt gc-opt"
 
 function usage {

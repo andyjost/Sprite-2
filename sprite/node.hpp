@@ -41,7 +41,8 @@ namespace sprite
     virtual void show() { std::cout << name(); }
     virtual void N() = 0;
     virtual void H() = 0;
-    virtual int64 value() { throw RuntimeError(); }
+    virtual int64 value()
+      { throw RuntimeError("error getting the value of a " + this->name()); }
     virtual size_t arity() const = 0;
     // The trailing underscore avoids a confusion between Node::apply and
     // lib::apply, when unqualified names are used.
@@ -59,7 +60,8 @@ namespace sprite
     #endif
 
     // More expensive version of operator[] that works on Node.
-    virtual NodePtr & at(size_t i) { throw RuntimeError(); }
+    virtual NodePtr & at(size_t i)
+      { throw RuntimeError("error indexing a " + this->name()); }
 
     /**
      * @brief Allocates storage for a new Node object.

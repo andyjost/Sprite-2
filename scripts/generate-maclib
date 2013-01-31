@@ -141,6 +141,7 @@ TEXT.append(
                                                                             \\
     /* Define the function to handle this branch in the DTree. */           \\
     static BEGIN_FUNCTION(A0,)                                              \\
+      typedef A0_CTORNAME(A0) inductive_type;                               \\
       static procedure vtable[] = { &fail, &fwd, &choice, &oper             \\
           REPEAT(A0)(VA_LEN(__VA_ARGS__),DTB_II,A0)                         \\
         };                                                                  \\

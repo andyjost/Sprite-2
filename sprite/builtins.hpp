@@ -42,6 +42,7 @@ namespace sprite
     virtual int64 value() { return dest->value(); }
     virtual size_t arity() const { return 0; }
     virtual Node * apply_(Node * arg) { return dest->apply_(arg); }
+    virtual NodePtr & at(size_t i) { return dest->at(i); }
     #if SPRITE_GC
       virtual iterator begin()
         { return reinterpret_cast<iterator>(&dest); }

@@ -25,6 +25,17 @@ namespace sprite { namespace lib
         )
     )
 
+
+  // False || x = x
+  // True || _ = True
+  OPERATION(BoolOr, "||", 2
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_Bool
+	      , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
+	      , (DT_LEAF, REWRITE(BoolNode, true))
+        )
+    )
+
+
   // not False = True
   // not True = False
   OPERATION(BoolNot, "not", 1

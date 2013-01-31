@@ -22,9 +22,9 @@ namespace sprite { namespace lib
   // length []     = 0
   // length (_:xs) = 1 + length xs
   OPERATION(length, "length", 1
-	  , (DT_BRANCH, RDX[0], SPRITE_LIB_List
-	      , (DT_LEAF, REWRITE(IntNode, 0L))
-	      , (DT_LEAF, REWRITE(AddNode, i1, NODE(length, IND[1])))
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(IntNode, 0L))
+        , (DT_LEAF, REWRITE(AddNode, i1, NODE(length, IND[1])))
         )
     )
 
@@ -75,8 +75,42 @@ namespace sprite { namespace lib
               NODE(GtNode, RDX[0], RDX[1])
             , THEN(Nil)
             , ELSE(
-                  Cons, RDX[0]
+                  Cons
+                , RDX[0]
                 , NODE(enumFromTo, NODE(AddNode, RDX[0], i1), RDX[1])
+                )
+            )
+        )
+    )
+
+  // enumFromThenTo n m z = enumFromDeltaTo n (m-n) z
+  // enumFromDeltaTo n d z = if n>z then [] else n : enumFromDeltaTo (n+d) d z
+  // denoted as [n,m..z]
+
+  struct enumFromDeltaTo;
+
+  OPERATION(enumFromThenTo, "enumFromThenTo", 3
+    , (DT_LEAF
+        , REWRITE(
+              enumFromDeltaTo, RDX[0], NODE(SubNode,RDX[1],RDX[0]), RDX[2]
+            )
+        )
+    )
+
+  OPERATION(enumFromDeltaTo, "enumFromDeltaTo", 3
+    , (DT_LEAF
+        , IF(
+              NODE(GtNode, RDX[0], RDX[2])
+            , THEN(Nil)
+            , ELSE(
+                  Cons
+                , RDX[0]
+                , NODE(
+                      enumFromDeltaTo
+                    , NODE(AddNode, RDX[0], RDX[1])
+                    , RDX[1]
+                    , RDX[2]
+                    )
                 )
             )
         )
@@ -218,6 +252,31 @@ namespace sprite { namespace lib
             )
         )
     )
+
+
+  // zipWith :: (a->b->c) -> [a]->[b]->[c]
+  // zipWith f (a:as) (b:bs) = f a b : zipWith f as bs
+  // zipWith _ _      _      = []
+  OPERATION(zipWith, "zipWith", 3
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(lib::Nil))
+        , (DT_BRANCH, RDX[2], SPRITE_LIB_List
+            , (DT_LEAF, REWRITE(lib::Nil))
+            , (DT_LEAF
+                , REWRITE(
+                      lib::Cons
+                    , NODE(
+                          lib::apply
+                        , NODE(lib::apply, RDX[0], RDX[1]->at(0))
+                        , IND[0]
+                        )
+                    , NODE(zipWith, RDX[0], RDX[1]->at(1), IND[1])
+                    )
+                )
+            )
+        )
+    )
+
 
   // TODO: comprehension
 }}

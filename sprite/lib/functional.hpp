@@ -34,5 +34,7 @@ namespace sprite { namespace lib
   typedef Partial<auxcomp,2> compose;
 
 
-
+  // const_ a _ = a
+  // Denoted as const
+  OPERATION(const_, "const", 2, (DT_LEAF, REWRITE(FwdNode, RDX[0])))
 }}
