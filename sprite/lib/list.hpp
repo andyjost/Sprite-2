@@ -5,6 +5,7 @@
 #pragma once
 #include "sprite/lib/functional.hpp"
 #include "sprite/lib/int.hpp"
+#include "sprite/lib/tuple.hpp"
 
 namespace sprite { namespace lib
 {
@@ -278,6 +279,105 @@ namespace sprite { namespace lib
     )
 
 
-  // TODO: comprehension
+  // zipWith3                :: (a->b->c->d) -> [a]->[b]->[c]->[d]
+  // zipWith3 z (a:as) (b:bs) (c:cs)
+  //                         =  z a b c : zipWith3 z as bs cs
+  // zipWith3 _ _ _ _        =  []
+  OPERATION(zipWith3, "zipWith3", 4
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(lib::Nil))
+        , (DT_BRANCH, RDX[2], SPRITE_LIB_List
+            , (DT_LEAF, REWRITE(lib::Nil))
+            , (DT_BRANCH, RDX[3], SPRITE_LIB_List
+                , (DT_LEAF, REWRITE(lib::Nil))
+                , (DT_LEAF
+                    , REWRITE(
+                          Cons
+                        , NODE(
+                              lib::apply3
+                            , RDX[0], RDX[1]->at(0), RDX[2]->at(0), IND[0]
+                            )
+                        , NODE(
+                              zipWith3
+                            , RDX[0], RDX[1]->at(1), RDX[2]->at(1), IND[1]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+  // --- Test for zipWith3
+  // using namespace lib::constants;
+  // OPERATION(add3, "add3", 3
+  //   , (DT_LEAF, REWRITE(AddNode, NODE(AddNode, RDX[0], RDX[1]), RDX[2]))
+  //   )
+
+  // OPERATION(MainNode, "main", 0
+  //   , (DT_LEAF
+  //       , REWRITE(
+  //             lib::zipWith3
+  //           , NODE(PARTIAL(add3,0))
+  //           , NODE(lib::Cons, i1, NODE(lib::Cons, i2, lib::nil))
+  //           , NODE(lib::Cons, i4, NODE(lib::Cons, i5, lib::nil))
+  //           , NODE(lib::Cons, i7, NODE(lib::Cons, i8, lib::nil))
+  //           )
+  //       )
+  //   )
+
+
+  // span                    :: (a -> Bool) -> [a] -> ([a],[a])
+  // span _ xs@[]            =  (xs, xs)
+  // span p xs@(x:xs')
+  //          | p x          =  let (ys,zs) = span p xs' in (x:ys,zs)
+  //          | otherwise    =  ([],xs)
+  // -- DESUGARED
+  // span _ xs@[]            =  (xs, xs)
+  // span p xs@(x:xs') = if p x then auxspan (span p xs') x else ([],xs)
+  // auxspan (ys,zs) x = (x:ys,zs)
+
+  struct auxspan;
+  OPERATION(span, "span", 2
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(Tuple2, RDX[1], RDX[1]))
+        , (DT_LEAF
+            , IF(
+                  NODE(apply, RDX[0], IND[0])
+                , THEN(auxspan, NODE(span, RDX[0], IND[1]), IND[0])
+                , ELSE(Tuple2, nil, RDX[1])
+                )
+            )
+        )
+    )
+
+  OPERATION(auxspan, "auxspan", 2
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_Tuple(2)
+        , (DT_LEAF, REWRITE(Tuple2, NODE(Cons, RDX[1], IND[0]), IND[1]))
+        )
+    )
+
+
+  // dropWhile               :: (a -> Bool) -> [a] -> [a]
+  // dropWhile _ []          =  []
+  // dropWhile p xs@(x:xs')
+  //             | p x       =  dropWhile p xs'
+  //             | otherwise =  xs
+  // -- DESUGARED
+  // dropWhile _ []          =  []
+  // dropWhile p xs@(x:xs') = if p x then dropWhile p xs' else xs
+
+  OPERATION(dropWhile, "dropWhile", 2
+    , (DT_BRANCH, RDX[1], SPRITE_LIB_List
+        , (DT_LEAF, REWRITE(Nil))
+        , (DT_LEAF
+            , IF(
+                  NODE(apply, RDX[0], IND[0])
+                , THEN(dropWhile, RDX[0], IND[1])
+                , ELSE(FwdNode, RDX[1])
+                )
+            )
+        )
+    )
 }}
 

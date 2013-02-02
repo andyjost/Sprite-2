@@ -22,6 +22,20 @@ namespace sprite { namespace lib
         )
     )
 
+  // apply2 f x y = f x y
+  OPERATION(apply2, "apply2", 3
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_Partial
+        , (DT_LEAF, REWRITE(apply, APPLY(RDX[0], RDX[1]), RDX[2]))
+        )
+    )
+
+  // apply3 f x y z = f x y z
+  OPERATION(apply3, "apply3", 4
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_Partial
+        , (DT_LEAF, REWRITE(apply2, APPLY(RDX[0], RDX[1]), RDX[2], RDX[3]))
+        )
+    )
+
 
   // compose   :: (b -> c) -> (a -> b) -> (a -> c)
   // compose f g = \x -> f (g x)
