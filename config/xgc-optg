@@ -1,0 +1,2 @@
+. $ROOT/config/base-config
+CFLAGS="$CFLAGS -DSPRITE_GC_MODE=2 -O5 -DNDEBUG -ggdb -DTRACING"
