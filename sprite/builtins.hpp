@@ -104,6 +104,7 @@ namespace sprite
     virtual void show() { std::cout << (is_false(this) ? "False" : "True"); }
     virtual void N() {}
     virtual void H() {}
+    virtual int64 value() { return this->tag; }
     virtual size_t arity() const { return 0; }
     #if SPRITE_GC
       virtual iterator begin() { return iterator(); }

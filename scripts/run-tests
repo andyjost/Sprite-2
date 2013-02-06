@@ -1,0 +1,89 @@
+#!/bin/bash
+
+set -e
+
+function usage {
+  cat >&2 << EOF
+Runs unit tests.
+
+USAGE
+    run-tests [-c <config-name>] [-q]
+
+        -c <config-name>
+            The configuration name, which is a file under config.  This is used
+            to configure the build.  Defaults to "default".
+
+        -q
+            Work silently.
+EOF
+  exit 1;
+}
+
+# ====== Parse Arguments ======
+
+CONFIG_NAME="default"
+QUIET=0
+
+while getopts "c:q" OPTION
+do
+  case $OPTION in
+    c)
+      CONFIG_NAME=$OPTARG
+      ;;
+    q)
+      QUIET=1
+      ;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$#" != "0" ]; then
+  usage
+  exit 1
+fi
+
+# ====== Configure ======
+
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+
+# Import the build configuration (sets CFLAGS and INCLUDE).
+if [ ! -f $ROOT/config/$CONFIG_NAME ]; then
+  echo "Config file \"$CONFIG_NAME\" not found under $ROOT/config" >&2
+  exit 1
+fi
+
+. $ROOT/config/$CONFIG_NAME
+
+
+# The object root holds every output of the build.
+OBJECT_ROOT="$ROOT/object_root"
+mkdir -p $OBJECT_ROOT
+
+OUTDIR=$OBJECT_ROOT/test/$CONFIG_NAME
+rm -rf $OUTDIR 2> /dev/null
+mkdir -p $OUTDIR
+
+# ====== Build ======
+
+if [[ $QUIET -eq 0 ]]; then
+    echo
+    echo "------ Building tests with config \"$CONFIG_NAME\" ------"
+fi
+
+EXE=$OUTDIR/test
+
+CMD="g++ $ROOT/test/test.cpp -o $EXE -I$ROOT -I$ROOT/test $INCLUDE $CFLAGS 2>&1 \
+    | tee $OUTDIR/build.log"
+if [[ $QUIET -eq 0 ]]; then
+  echo $CMD
+fi
+eval $CMD
+
+# ====== Run ======
+if [[ $QUIET -eq 0 ]]; then
+    echo
+    echo "------ Running tests with config \"$CONFIG_NAME\" ------"
+fi
+$EXE
+exit $?
