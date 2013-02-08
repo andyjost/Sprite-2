@@ -59,7 +59,7 @@ namespace sprite { namespace module { namespace reverse
   goal11 = isList (natList nat256M)
   goal12 = isList (natList nat1G)
   
-  main = goal5
+  main = goal4
   */
 
   using namespace sprite;
@@ -188,5 +188,5 @@ namespace sprite { namespace module { namespace reverse
     , (DT_LEAF, REWRITE(IsListNode, NODE(NatListNode, NODE(Nat1G))))
     )
 
-  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal10Node)))
+  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal4Node)))
 }}}
