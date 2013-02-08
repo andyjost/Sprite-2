@@ -1,19 +1,14 @@
--- !!! count the number of solutions to the "n queens" problem.
--- (grabbed from LML dist)
+nsoln nq = length (gen nq nq)
+gen r l = if l==0 then [[]]
+   else filter lambda_0 (concatMap (lambda_1 r) (gen r (l-1)))
 
-import System.Environment
+lambda_0 (q:b) = safe q 1 b
+lambda_1 r b = (map (lambda_2 b) [1..r])
+lambda_2 b q = q:b
 
+safe _ _ []    = True
+safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
 
 main = do
-	[arg] <- getArgs
-	print $ nsoln $ read arg
+  print $ nsoln 10
 
-nsoln nq = length (gen nq)
- where
-    safe :: Int -> Int -> [Int] -> Bool
-    safe x d []    = True
-    safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
-
-    gen :: Int -> [[Int]]
-    gen 0 = [[]]
-    gen n = [ (q:b) | b <- gen (n-1), q <- [1..nq], safe q 1 b]

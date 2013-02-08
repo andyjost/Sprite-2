@@ -69,6 +69,9 @@ namespace sprite { namespace module { namespace wheel_sieve1
     lambda_2 p o n = filter (lambda_3 p) [n+o]
     lambda_3 p n' = n'`mod`p > 0
 
+    main = do
+      print $ primes !! 20000
+
   */
 
   using namespace sprite;

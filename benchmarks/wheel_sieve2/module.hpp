@@ -87,6 +87,9 @@ namespace sprite { namespace module { namespace wheel_sieve2
     
     turn_1 p o n rs = turn0_1 p (o+n) rs
 
+    main = do
+      print $ primes !! 8000
+
   */
 
   using namespace sprite;

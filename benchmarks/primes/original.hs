@@ -1,3 +1,6 @@
+
+import System.Environment
+
 suCC :: Int -> Int
 suCC x = x + 1
 
@@ -11,4 +14,5 @@ primes :: [Int]
 primes = map head (iterate the_filter (iterate suCC 2))
 
 main = do
-  print $ primes !! 5500
+	[arg] <- getArgs
+	print $ primes !! (read arg)

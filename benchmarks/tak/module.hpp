@@ -11,7 +11,8 @@ namespace sprite { namespace module { namespace tak
                          (tak (y-1) z x)
                          (tak (z-1) x y)
     goal1 = tak 27 16 8
-    main = goal1
+    main = do
+      print $ goal1
   */
 
   using namespace sprite;

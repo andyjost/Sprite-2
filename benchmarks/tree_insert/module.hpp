@@ -14,7 +14,7 @@ namespace sprite { namespace module { namespace tree_insert
     insert x Leaf = Branch x Leaf Leaf
     insert x (Branch y l r) | x < y = Branch y (insert x l) r
                             | y < x = Branch y l (insert x r)
-          | x == y = Branch y l r
+                            | x == y = Branch y l r
     
     count Leaf = 0
     count (Branch _ l r) = 1 + count l + count r

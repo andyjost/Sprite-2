@@ -5,10 +5,11 @@
 namespace sprite { namespace module { namespace rfib
 {
   /*
-    nfib :: Double -> Double
+    nfib :: Int -> Int
     nfib n = if n <= 1 then 1 else nfib (n-1) + nfib (n-2) + 1
 
-    main = nfib 30
+    main = do
+      print $ nfib 35
   */
 
   using namespace sprite;
@@ -34,6 +35,6 @@ namespace sprite { namespace module { namespace rfib
     )
 
   OPERATION(MainNode, "main", 0
-    , (DT_LEAF, REWRITE(NFibNode, NODE(IntNode, 30)))
+    , (DT_LEAF, REWRITE(NFibNode, NODE(IntNode, 35)))
     )
 }}}
