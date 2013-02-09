@@ -8,7 +8,7 @@ function usage {
 Executes one or more benchmark programs with one or more configurations.
 
 USAGE
-    bench [-M|s] [-c <config-spec>] [<bench-name> ...]
+    bench [-h|j|l|M|p|q] [-c <config-spec>] [<bench-name> ...]
 
         -c <config-spec>
             Run the specified configurations.  ``config-spec`` is a
@@ -19,6 +19,9 @@ USAGE
 
         -h
             Display this help message.
+
+        -j
+            Build in parallel.
 
         -l
             Output a long report of the timing results.
@@ -44,8 +47,9 @@ SHORT_FLAG="-s"
 NO_MAKE=0
 QUIET=0
 P_OPT=""
+PARALLEL=""
 
-while getopts "c:hlMpq" OPTION
+while getopts "c:hjlMpq" OPTION
 do
   case $OPTION in
     c)
@@ -53,6 +57,10 @@ do
       ;;
     h)
       usage
+      ;;
+    j)
+      PARALLEL="&"
+      echo "PARALLEL"
       ;;
     l)
       SHORT_FLAG=""
@@ -95,8 +103,10 @@ fi
 if [[ $NO_MAKE == 0 ]]; then
   for CONFIG in $CONFIGS
   do
-    ./scripts/make-benchmarks $P_OPT -c $CONFIG $QUIET_OPTION $BENCHMARKS
+    eval ./scripts/make-benchmarks \$P_OPT -c \$CONFIG \$QUIET_OPTION \$BENCHMARKS $PARALLEL
   done
+
+  wait
 
   if [[ $QUIET == 0 ]]; then
     echo
