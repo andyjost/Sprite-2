@@ -1,19 +1,21 @@
 #!/bin/bash
 
 BENCHMARKS="reverse tak rfib exp3_8 tree_insert tree_insert_32 primes queens wheel_sieve1 wheel_sieve2"
-DEFAULT_CONFIGS="refcnt-opt gc-opt"
+DEFAULT_CONFIGS="refcnt-opt gc-opt ghc"
 
 function usage {
   cat >&2 << EOF
 Executes one or more benchmark programs with one or more configurations.
 
 USAGE
-    bench [-M|s] [-c config-spec] [bench-name ...]
+    bench [-M|s] [-c <config-spec>] [<bench-name> ...]
 
-        -c config-spec
+        -c <config-spec>
             Run the specified configurations.  ``config-spec`` is a
-            space-separated list of configurations.  May be supplied multiple
-            times.  Defaults to "$DEFAULT_CONFIGS".
+            space-separated list of configurations.  Each configuration must be
+            the name of a file under the config directory, or the special value
+            "ghc".  May be supplied multiple times.  Defaults to
+            "$DEFAULT_CONFIGS".
 
         -h
             Display this help message.
@@ -30,7 +32,7 @@ USAGE
         -q
             Work silently.
 
-        bench-name
+        <bench-name>
             Specifies the benchmarks to run.  Defaults to "$BENCHMARKS".
             
 EOF

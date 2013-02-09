@@ -10,12 +10,12 @@ USAGE
     make-benchmarks [-c <config-name>] [-p|q] <benchmark-name> [ ... ]
 
         -c <config-name>
-            The configuration name, which is a file under config.  This is used
-            to configure the build.  Defaults to "default".
+            The configuration name, which is a file under config or "ghc".
+            This is used to configure the build.  Defaults to "default".
 
         -p
-            Indicates to compile with preprocessed source.  This can be
-            used to simplify debugging and profiling.
+            Indicates to compile with preprocessed source.  This can be used to
+            simplify debugging and profiling.  Ignored for ghc configuration.
 
         -q
             Work silently.
@@ -29,15 +29,26 @@ EOF
 
 # ====== Parse Arguments ======
 
+IS_SPRITE=1
 BUILD="build"
 CONFIG_NAME="default"
 QUIET=0
+NCONFIG=0
 
 while getopts "c:pq" OPTION
 do
   case $OPTION in
     c)
+      if [ "$NCONFIG" -ne 0 ]; then
+        echo "$0: Too many configs" 1>&2
+        exit 1
+      fi
+      NCONFIG=1
+
       CONFIG_NAME=$OPTARG
+      if [ "$CONFIG_NAME" == "ghc" ]; then
+        IS_SPRITE=0
+      fi
       ;;
     p)
       BUILD="build-pp"
@@ -59,14 +70,23 @@ fi
 
 ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
 
-# Import the build configuration (sets CFLAGS and INCLUDE).
-if [ ! -f $ROOT/config/$CONFIG_NAME ]; then
-  echo "Config file \"$CONFIG_NAME\" not found under $ROOT/config" >&2
-  exit 1
+if [ $CONFIG_NAME == "ghc" ]; then
+  # Check for ghc.
+  type -P ghc >/dev/null 2>&1 || \
+      {
+        echo >&2 "ghc was not found in PATH, but it is required to use" \
+                 "\"ghc\" configuration";
+        exit 1;
+        }
+else
+  # Import the build configuration (sets CFLAGS and INCLUDE).
+  if [ ! -f $ROOT/config/$CONFIG_NAME ]; then
+    echo "Config file \"$CONFIG_NAME\" not found under $ROOT/config" >&2
+    exit 1
+  fi
+  
+  . $ROOT/config/$CONFIG_NAME
 fi
-
-. $ROOT/config/$CONFIG_NAME
-
 
 for BENCHMARK_NAME in $@
 do
@@ -92,7 +112,10 @@ do
   mkdir -p $OUTDIR
   
   # Generate the main source file.
-  cat > $OUTDIR/main.cpp <<EOF
+  if [ $CONFIG_NAME == "ghc" ]; then
+    cp $ROOT/benchmarks/$BENCHMARK_NAME/Main.hs $OUTDIR
+  else
+    cat > $OUTDIR/main.cpp <<EOF
 #include "sprite/sprite.hpp"
 #include "benchmarks/$BENCHMARK_NAME/module.hpp"
 #include "src/sprite.cpp" // quick-n-dirty, instead of building a lib
@@ -116,44 +139,49 @@ int main()
   return 0;
 }
 EOF
+  fi
   
   
   # ====== Build ======
   
   EXE=$OUTDIR/benchmark-$BENCHMARK_NAME
   
-  # Use preprocessed source to make debugging and profiling easier.
-  function build-pp {
-    CMD="g++ $OUTDIR/main.cpp -E -P -o $OUTDIR/sprite.ii -I$ROOT $INCLUDE $CFLAGS \
-        | tee $OUTDIR/build.log"
-    if [[ $QUIET -eq 0 ]]; then
-      echo $CMD
-    fi
-    eval $CMD
+  if [ $CONFIG_NAME == "ghc" ]; then
+    ghc $OUTDIR/Main.hs -o $EXE
+  else
+    # Use preprocessed source to make debugging and profiling easier.
+    function build-pp {
+      CMD="g++ $OUTDIR/main.cpp -E -P -o $OUTDIR/sprite.ii -I$ROOT $INCLUDE $CFLAGS \
+          | tee $OUTDIR/build.log"
+      if [[ $QUIET -eq 0 ]]; then
+        echo $CMD
+      fi
+      eval $CMD
+    
+      # Reformat the source.  This breaks up the long lines resulting from deep
+      # macro expansions, to ease debugging.
+      # cp $OUTDIR/sprite.ii $OUTDIR/sprite.ii.orig
+      $ROOT/scripts/reformat $OUTDIR/sprite.ii
+    
+      # Add -fno-omit-frame-pointer to use %rbp for the frame pointer.
+      CMD="g++ $OUTDIR/sprite.ii -o $EXE $CFLAGS 2>&1 | tee -a $OUTDIR/build.log"
+      if [[ $QUIET -eq 0 ]]; then
+        echo $CMD
+      fi
+      eval $CMD
+    }
+    
+    # Normal build.
+    function build {
+      CMD="g++ $OUTDIR/main.cpp -o $EXE -I$ROOT $INCLUDE $CFLAGS 2>&1 \
+          | tee $OUTDIR/build.log"
+      if [[ $QUIET -eq 0 ]]; then
+        echo $CMD
+      fi
+      eval $CMD
+    }
   
-    # Reformat the source.  This breaks up the long lines resulting from deep
-    # macro expansions, to ease debugging.
-    # cp $OUTDIR/sprite.ii $OUTDIR/sprite.ii.orig
-    $ROOT/scripts/reformat $OUTDIR/sprite.ii
-  
-    # Add -fno-omit-frame-pointer to use %rbp for the frame pointer.
-    CMD="g++ $OUTDIR/sprite.ii -o $EXE $CFLAGS 2>&1 | tee -a $OUTDIR/build.log"
-    if [[ $QUIET -eq 0 ]]; then
-      echo $CMD
-    fi
-    eval $CMD
-  }
-  
-  # Normal build.
-  function build {
-    CMD="g++ $OUTDIR/main.cpp -o $EXE -I$ROOT $INCLUDE $CFLAGS 2>&1 \
-        | tee $OUTDIR/build.log"
-    if [[ $QUIET -eq 0 ]]; then
-      echo $CMD
-    fi
-    eval $CMD
-  }
-  
-  $BUILD
+    $BUILD
+  fi
 
 done
