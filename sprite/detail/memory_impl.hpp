@@ -19,7 +19,7 @@ namespace sprite
       assert(g_mark == 0 || g_mark == 1);
   
       #if TRACEGC
-        std::cout << "Starting collection with mark = " << (int)g_mark
+        std::cout << "\nStarting collection with mark = " << (int)g_mark
           << std::endl;
         ticks t0 = getticks();
         ticks t1;
@@ -91,7 +91,8 @@ namespace sprite
         total /= partition_size;
         float const pct =  total == 0 ? 0 : 100.0 * n / total;
         std::cout << "Done collecting: freed " << n << " out of "
-          << total << " chunks (" << pct << "%)." << std::endl;
+          << total << " chunks (" << pct << "%); " << (total-n) << " remain."
+          << std::endl;
       #endif
       return std::make_pair(n,last);
     }
