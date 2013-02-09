@@ -147,7 +147,7 @@ EOF
   EXE=$OUTDIR/benchmark-$BENCHMARK_NAME
   
   if [ $CONFIG_NAME == "ghc" ]; then
-    ghc $OUTDIR/Main.hs -o $EXE
+    ghc -O2 $OUTDIR/Main.hs -o $EXE
   else
     # Use preprocessed source to make debugging and profiling easier.
     function build-pp {
