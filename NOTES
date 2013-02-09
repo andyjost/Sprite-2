@@ -7,3 +7,15 @@
     ever-increasing amount of memory.  I tried adjusting the gc threshold to
     improve performance.  A setting of 50% had essentially no effect, so I
     abandoned the effort.
+
+  - Enabling SPRITE_OPTIMIZE_IF_EXPR (config:amj) does improve the performance
+    of wheel_sieve2, but only by about 25%.
+
+        Running on galapagos.
+        ------ Config refcnt-opt ------
+        wheel_sieve2         0:03.91
+        ------ Config amj ------
+        wheel_sieve2         0:02.83
+        ------ Config ghc ------
+        wheel_sieve2         0:00.08
+
