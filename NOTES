@@ -1,0 +1,4 @@
+2/9/2013
+  I tried implementing path compression over FWD nodes to improve wheel_sieve2.
+  The average path length is only 1.79 (among paths with FWD nodes) and,
+  overall, preformance degrades.
