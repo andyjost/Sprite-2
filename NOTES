@@ -19,3 +19,12 @@
         ------ Config ghc ------
         wheel_sieve2         0:00.08
 
+2/10/2013
+  - Here are a few ideas to improve core performance.
+    
+    - Switch from the dt() method to explicit goto statements.
+
+    - Eliminate the use of at() in cases where the type is known.
+
+    - Use a global register for the head of the free list.
+
