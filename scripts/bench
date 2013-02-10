@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BENCHMARKS="reverse tak rfib exp3_8 tree_insert tree_insert_32 primes queens wheel_sieve1 wheel_sieve2"
-DEFAULT_CONFIGS="refcnt-opt gc-opt ghc"
+DEFAULT_CONFIGS="refcnt-opt gc-opt ghc mcc"
 
 function usage {
   cat >&2 << EOF
@@ -13,9 +13,9 @@ USAGE
         -c <config-spec>
             Run the specified configurations.  ``config-spec`` is a
             space-separated list of configurations.  Each configuration must be
-            the name of a file under the config directory, or the special value
-            "ghc".  May be supplied multiple times.  Defaults to
-            "$DEFAULT_CONFIGS".
+            the name of a file under the config directory, or one of the
+            special values "ghc" or "mcc".  May be supplied multiple times.
+            Defaults to "$DEFAULT_CONFIGS".
 
         -h
             Display this help message.
@@ -60,7 +60,6 @@ do
       ;;
     j)
       PARALLEL="&"
-      echo "PARALLEL"
       ;;
     l)
       SHORT_FLAG=""

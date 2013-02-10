@@ -22,7 +22,7 @@ wheels :: [Wheel]
 wheels = (Wheel 1 [1]) : zipWith nextSize wheels primes
 
 nextSize (Wheel s ns) p = Wheel (s*p) (ns' s ns p)
-ns' s ns p = concatMap (lambda_1 ns p) [0,s..(p-1)*s]
+ns' s ns p = concatMap (lambda_1 ns p) [0,s .. (p-1)*s]
 lambda_1 ns p o = concatMap (lambda_2 p o) ns
 lambda_2 p o n = filter (lambda_3 p) [n+o]
 lambda_3 p n' = n'`mod`p > 0

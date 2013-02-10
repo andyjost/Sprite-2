@@ -39,6 +39,8 @@ if [ "$#" == "0" ]; then
 fi
 
 ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+TMP=`mktemp -d`
+trap "rm -rf $TMP" EXIT
 
 for BENCHMARK_NAME in $@
 do
@@ -51,10 +53,18 @@ do
 
   if [[ $SHORT_OUTPUT -ne 0 ]]; then
     printf "%-20s " $BENCHMARK_NAME
-    \time --format="%E" -- $EXE > /dev/null
+    \time --format="%E" -o $TMP/$BENCHMARK_NAME -- $EXE > /dev/null 2>&1
+
+    if [ "$?" -eq 0 ]; then
+      echo `cat $TMP/$BENCHMARK_NAME`
+    else
+      echo "(failed)"
+    fi
+
   else
     echo "------ $BENCHMARK_NAME ------"
     \time $EXE
   fi
+
 done
 

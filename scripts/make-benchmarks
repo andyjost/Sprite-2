@@ -10,8 +10,9 @@ USAGE
     make-benchmarks [-c <config-name>] [-p|q] <benchmark-name> [ ... ]
 
         -c <config-name>
-            The configuration name, which is a file under config or "ghc".
-            This is used to configure the build.  Defaults to "default".
+            The configuration name, which is a file under config or "ghc" or
+            "mcc".  This is used to configure the build.  Defaults to
+            "default".
 
         -p
             Indicates to compile with preprocessed source.  This can be used to
@@ -46,7 +47,7 @@ do
       NCONFIG=1
 
       CONFIG_NAME=$OPTARG
-      if [ "$CONFIG_NAME" == "ghc" ]; then
+      if [ "$CONFIG_NAME" == "ghc" -o "$CONFIG_NAME" == "mcc" ]; then
         IS_SPRITE=0
       fi
       ;;
@@ -76,6 +77,14 @@ if [ $CONFIG_NAME == "ghc" ]; then
       {
         echo >&2 "ghc was not found in PATH, but it is required to use" \
                  "\"ghc\" configuration";
+        exit 1;
+        }
+elif [ $CONFIG_NAME == "mcc" ]; then
+  # Check for mcc.
+  type -P cyc >/dev/null 2>&1 || \
+      {
+        echo >&2 "cyc was not found in PATH, but it is required to use" \
+                 "\"mcc\" configuration";
         exit 1;
         }
 else
@@ -114,6 +123,8 @@ do
   # Generate the main source file.
   if [ $CONFIG_NAME == "ghc" ]; then
     cp $ROOT/benchmarks/$BENCHMARK_NAME/Main.hs $OUTDIR
+  elif [ $CONFIG_NAME == "mcc" ]; then
+    cp $ROOT/benchmarks/$BENCHMARK_NAME/Main.curry $OUTDIR
   else
     cat > $OUTDIR/main.cpp <<EOF
 #include "sprite/sprite.hpp"
@@ -148,6 +159,8 @@ EOF
   
   if [ $CONFIG_NAME == "ghc" ]; then
     ghc -O2 $OUTDIR/Main.hs -o $EXE
+  elif [ $CONFIG_NAME == "mcc" ]; then
+    cyc -m32 $OUTDIR/Main.curry -O2 -o $EXE
   else
     # Use preprocessed source to make debugging and profiling easier.
     function build-pp {
