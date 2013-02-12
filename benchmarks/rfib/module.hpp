@@ -16,7 +16,7 @@ namespace sprite { namespace module { namespace rfib
   using lib::constants::i1;
   using lib::constants::i2;
 
-  OPERATION(NFibNode, "nfib", 1
+  OPERATION(nfib, "nfib", 1
     , (DT_LEAF
         , IF(
               NODE(LeNode, RDX[0], i1)
@@ -25,8 +25,8 @@ namespace sprite { namespace module { namespace rfib
                   AddNode
                 , NODE(
                       AddNode
-                    , NODE(NFibNode, NODE(SubNode, RDX[0], i1))
-                    , NODE(NFibNode, NODE(SubNode, RDX[0], i2))
+                    , NODE(nfib, NODE(SubNode, RDX[0], i1))
+                    , NODE(nfib, NODE(SubNode, RDX[0], i2))
                     )
                 , i1
                 )
@@ -34,7 +34,22 @@ namespace sprite { namespace module { namespace rfib
         )
     )
 
+  #if 0
+  // This demonstrates an unboxing optimization.
+  namespace unboxed
+  {
+    inline int64 nfib(int64 n)
+      { return n <= 1 ? 1 : (unboxed_nfib(n-1) + unboxed_nfib(n-2) + 1); }
+  }
+
+  OPERATION(nfib_unboxed, "nfib_unboxed", 1
+    , (DT_BRANCH, RDX[0], SPRITE_LIB_UnboxedInt
+        , (DT_LEAF, REWRITE(IntNode, unboxed::nfib(RDX[0]->value())))
+        )
+    )
+  #endif
+
   OPERATION(MainNode, "main", 0
-    , (DT_LEAF, REWRITE(NFibNode, NODE(IntNode, 35)))
+    , (DT_LEAF, REWRITE(nfib, NODE(IntNode, 35)))
     )
 }}}

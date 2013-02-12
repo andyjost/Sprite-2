@@ -77,6 +77,11 @@ namespace sprite
 
   namespace lib { using sprite::IntNode; }
 
+  // This type is manually-defined (i.e., it is not passed to TYPE).  It can be
+  // used with DT_BRANCH to reduce an integer expression to HNF.  The value
+  // method can subsequently be called to unbox the value.
+  #define SPRITE_LIB_UnboxedInt (lib, ((IntNode, "Int", 0)))
+
 
   // ==== Bool ====
   struct BoolNode;
