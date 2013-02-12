@@ -39,7 +39,7 @@ namespace sprite { namespace module { namespace rfib
   namespace unboxed
   {
     inline int64 nfib(int64 n)
-      { return n <= 1 ? 1 : (unboxed_nfib(n-1) + unboxed_nfib(n-2) + 1); }
+      { return n <= 1 ? 1 : (nfib(n-1) + nfib(n-2) + 1); }
   }
 
   OPERATION(nfib_unboxed, "nfib_unboxed", 1
