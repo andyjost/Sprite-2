@@ -28,3 +28,5 @@
 
     - Use a global register for the head of the free list.
 
+    - Measure the relative time for pattern matching and rewriting to guide
+      optimization.
