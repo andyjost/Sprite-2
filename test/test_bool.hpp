@@ -67,6 +67,7 @@ OPERATION(test_BoolNot, "test_BoolNot", 0
 
 BOOST_AUTO_TEST_CASE(test_bool)
 {
+  SystemInitializer sys;
   BOOST_CHECK(Exec<test_BoolAnd>().is_list(true, false, false, false));
   BOOST_CHECK(Exec<test_BoolOr>().is_list(true, true, true, false));
   BOOST_CHECK(Exec<test_BoolNot>().is_list(false, true));

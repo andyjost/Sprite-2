@@ -5,6 +5,13 @@
 #pragma once
 #include "sprite/timer.hpp"
 
+// The head of the free list is either a member variable or global register.
+#ifdef SPRITE_NO_REGISTER_FREE_LIST
+  #define HEAD this->first
+#else
+  #define HEAD g_free_list
+#endif
+
 namespace sprite
 {
   #if SPRITE_GC
@@ -112,8 +119,8 @@ namespace sprite
       if(current_size - nfree >= threshold)
       {
         // Save the free list and then set it to empty in this object.
-        void * const save_list = this->first;
-        this->first = 0;
+        void * const save_list = HEAD;
+        HEAD = 0;
         assert(!save_list == !last); // both are null or both are non-null
   
         // This call will allocate a new block, since the free list is empty.
@@ -122,8 +129,8 @@ namespace sprite
         // If the old free list was not empty, insert it before the new block.
         if(last)
         {
-          this->nextof(last) = this->first;
-          this->first = save_list;
+          this->nextof(last) = HEAD;
+          HEAD = save_list;
         }
         return ret;
       }

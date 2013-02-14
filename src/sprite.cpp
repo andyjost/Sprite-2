@@ -1,5 +1,6 @@
 #include "sprite/sprite.hpp"
 
+
 namespace sprite
 {
   NodePtr root;
@@ -12,6 +13,10 @@ namespace sprite
     {
       // Start with a request for 1024 nodes.
       node_allocator = new node_pool_type(NODE_BYTES, 1024);
+    }
+    if(!static_node_allocator)
+    {
+      static_node_allocator = new boost::pool<>(NODE_BYTES, 128);
     }
     if(!child_allocator)
     {
@@ -27,7 +32,40 @@ namespace sprite
   }
 
   node_pool_type * node_allocator;
+  boost::pool<> * static_node_allocator;
   boost::pool<> * child_allocator;
+
+  // This function must be called in main, after static initialization is
+  // complete.
+  //
+  // The g_free_list (a dedicated register) must be initializes after main
+  // begins.
+  SystemInitializer::SystemInitializer()
+  {
+    static bool initialized = false;
+    if(!initialized)
+    {
+      initialized = true;
+      g_free_list = 0;
+    }
+  }
+
+  // This function must be called in main, just before static destruction
+  // begins.
+  //
+  // Any global objects with destructors that might call ~Node must be cleared
+  // before main returns.  Otherwise, memory will be reclaimed during static
+  // desctruction, which would use g_free_list.
+  SystemInitializer::~SystemInitializer()
+  {
+    // Increment the reference count to avoid ever reclaiming these objects.
+    #if SPRITE_REFCNT
+    Node * p = get(root);
+    ++p->refcnt;
+    #endif
+
+    root = NodePtr();
+  }
 }
 
 __attribute__((noinline)) void show()

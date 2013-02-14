@@ -61,6 +61,7 @@ OPERATION(test_concatMap, "test_concatMap", 0
 
 BOOST_AUTO_TEST_CASE(test_list)
 {
+  SystemInitializer sys;
   BOOST_CHECK(Exec<test_headfail>().fails());
   BOOST_CHECK(Exec<test_tailfail>().fails());
   BOOST_CHECK(Exec<test_enumFrom>().is_list(1,2,3,4));

@@ -24,6 +24,8 @@ namespace sprite
 
   struct NodeH;
 
+  struct static_init_tag {};
+
   struct Node
   {
     // To facilitate rewriting, the reference count must *not* be initialized.
@@ -63,18 +65,43 @@ namespace sprite
     virtual NodePtr & at(size_t i)
       { throw RuntimeError("error indexing a " + this->name()); }
 
-    /**
-     * @brief Allocates storage for a new Node object.
-     *
-     */
+    /// Allocates storage for a new Node object.
     void * operator new(size_t sz)
     {
       assert(sz <= NODE_BYTES);
       void * p = node_allocator->malloc();
-      assert(p);
+
       #ifdef TRACEALLOC
         std::cout << "alloc@" << p << std::endl;
       #endif
+
+      new_init(p);
+      return p;
+    }
+
+    /// Allocates storage for a new static Node object.
+    void * operator new(size_t sz, static_init_tag)
+    {
+      assert(sz <= NODE_BYTES);
+      void * p = static_node_allocator->malloc();
+
+      #ifdef TRACEALLOC
+        std::cout << "static alloc@" << p << std::endl;
+      #endif
+
+      new_init(p);
+
+      #if SPRITE_REFCNT
+      ++(reinterpret_cast<Node *>(p)->refcnt);
+      #endif
+
+      return p;
+    }
+
+    // Initializes new Node memory.
+    static void new_init(void * p)
+    {
+      assert(p);
 
       #if SPRITE_GC
         // Garbage collection.  New nodes are marked locked.
@@ -87,8 +114,8 @@ namespace sprite
         // (with a count of zero).
         reinterpret_cast<Node *>(p)->refcnt = 0;
       #endif
-      return p;
     }
+
     void * operator new(size_t sz, void * p) { return p; }
 
     #if SPRITE_USE_DTOR
@@ -307,6 +334,18 @@ namespace sprite
     /**/
   BOOST_PP_REPEAT(SPRITE_ARITY_BOUND,F,)
   #undef F
+
+  // Constructs a static node.  This does not use the global node pool.  When
+  // using a dedicated global register for the head of the node pool free list,
+  // it is illegal to interact with the pool during the static initialization
+  // phase.  For static nodes, just use another pool without that optimization.
+  #define F(z,n,_)                                                               \
+      template<typename T BOOST_PP_ENUM_TRAILING_PARAMS(n, typename U)>          \
+      inline Node * static_construct(BOOST_PP_ENUM_BINARY_PARAMS(n,U,const & u)) \
+        { return new(static_init_tag()) T(BOOST_PP_ENUM_PARAMS(n, u)); }         \
+    /**/
+  BOOST_PP_REPEAT(SPRITE_ARITY_BOUND,F,)
+  #undef F
 }
 
 // References the current redex.
@@ -330,8 +369,8 @@ namespace sprite
 #endif
 
 // Constructs a new node that is never reclaimed.
-#define STATIC_NODE(name, type, ...)                    \
-    NodePtr name = sprite::construct<type>(__VA_ARGS__) \
+#define STATIC_NODE(name, type, ...)                           \
+    NodePtr name = sprite::static_construct<type>(__VA_ARGS__) \
   /**/
 
 // Performs a rewrite at the current redex.

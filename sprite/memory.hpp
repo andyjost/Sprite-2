@@ -6,6 +6,7 @@
 #pragma once
 #include "sprite/common.hpp"
 #include <boost/pool/pool.hpp>
+#include "sprite/detail/global_pool.hpp"
 #include <stack>
 
 namespace sprite
@@ -109,16 +110,27 @@ namespace sprite
     #ifdef TRACEGC
     typedef NodePool<MonitorAllocator> node_pool_type;
     #else
-    typedef NodePool<> node_pool_type;
+      #ifdef SPRITE_NO_REGISTER_FREE_LIST
+        typedef NodePool<> node_pool_type;
+      #else
+        typedef NodePool<GlobalAllocator> node_pool_type;
+      #endif
     #endif
   #else
 
     // Node pool without collection.
-    typedef boost::pool<> node_pool_type;
+    #ifdef SPRITE_NO_REGISTER_FREE_LIST
+      typedef boost::pool<> node_pool_type;
+    #else
+      typedef boost::pool<GlobalAllocator> node_pool_type;
+    #endif
   #endif
 
   /// The pool for allocating new nodes.
   extern node_pool_type * node_allocator;
+
+  /// Used to allocate nodes during the static initialization phase.
+  extern boost::pool<> * static_node_allocator;
 
   /// An array of pools for child lists of length 1,2,...,n.
   extern boost::pool<> * child_allocator;

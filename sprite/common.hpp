@@ -55,12 +55,37 @@ namespace sprite
   typedef Node * NodePtr;
   #endif
 
+  // Note: According to the x86_64 ABI:
+  //
+  //     "Registers %rbp, %rbx and %r12 through %r15 belong to the calling
+  //     function and the called function is required to preserve their
+  //     values".
+  //
+  // There is no need to recompile shared objects when using these global
+  // registers.
+
   /// Global pointer to the current vtable.
   register procedure * g_vtable asm ("r15");
   /// Global pointer to the current redex.
   register Node * g_redex asm ("r14");
   /// Global pointer to the current inductive node.
   register Node * g_inductive asm ("r13");
+
+  #ifdef SPRITE_NO_REGISTER_FREE_LIST
+  void * g_free_list;
+  #else
+  /// Global pointer to the head of the free list for new nodes.
+  register void * g_free_list asm ("r12");
+  #endif
+
+
+  // In instance of this object must be added as the very first line of main, to perfom
+  // system initialization and shutdown.
+  struct SystemInitializer
+  {
+    SystemInitializer();
+    ~SystemInitializer();
+  };
 }
 
 #include <boost/foreach.hpp>

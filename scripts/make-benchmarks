@@ -135,6 +135,7 @@ int main()
 {
   using namespace sprite;
   using sprite::root;
+  SystemInitializer sys;
   root = new module::$BENCHMARK_NAME::MainNode();
   try
   {
