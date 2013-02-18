@@ -348,12 +348,6 @@ namespace sprite
   #undef F
 }
 
-// References the current redex.
-#define RDX (*static_cast<this_type*>(g_redex))
-
-// References the current inductive node.
-#define IND (ind<inductive_type>())
-
 // Constructs a new node.  If using garbage collection, use LockedPtr to unlock
 // the node when done.
 #if SPRITE_GC
@@ -373,15 +367,16 @@ namespace sprite
     NodePtr name = sprite::static_construct<type>(__VA_ARGS__) \
   /**/
 
-// Performs a rewrite at the current redex.
-#define REWRITE(type, ...) rewrite<type>(__VA_ARGS__);
-
 // Performs application to a partially-bound call.
 #if SPRITE_GC
 #define APPLY(func,arg) LockedPtr(sprite::detail::apply(func,arg))
 #else
 #define APPLY(func,arg) sprite::detail::apply(func,arg)
 #endif
+
+// Handles an exempt node.  For convenience, this simply expands to a leaf that
+// rewrite to fail.
+#define DT_EXEMPT (DT_LEAF, REWRITE(FailNode))
 
 // Forms the type name of a partial application object.
 #define PARTIAL(op,nbound) Partial<op,nbound>
@@ -404,47 +399,12 @@ namespace sprite
   #define ELIF(expr,true_,false_) NODE(lib::ifThenElse, expr, true_, false_)
 #endif
 
-// Handles an exempt node.  For convenience, this simply expands to a leaf that
-// rewrite to fail.
-#define DT_EXEMPT (DT_LEAF, REWRITE(FailNode))
 
-// ----
-
-// Defines a constructor node.
-#define CONSTRUCTOR(ident, label, arity, id)                                  \
-    struct ident : Node                                                       \
-    {                                                                         \
-      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, id)                    \
-      virtual void N() { BOOST_PP_REPEAT(arity,CTOR_I,) }                     \
-      virtual void H() {}                                                     \
-    };                                                                        \
-  /**/
-// Note: this macro is also used in partial.hpp.
-#define CTOR_I(z,n,_) (*this)[n]->N();
-
-// ----
-
-// Defines an operation node.
-#define OPERATION(ident, label, arity, dtree)                        \
-    struct ident : Node                                              \
-    {                                                                \
-      SPRITE_NODE_PREAMBLE(ident, ident, label, arity, OPER)         \
-      virtual void N() { g_redex = this; dt(); N(); }                \
-      virtual void H() { g_redex = this; dt(); H(); }                \
-    private:                                                         \
-      __attribute__((noinline)) DEFINITIONAL_TREE dtree              \
-    };                                                               \
-  /**/
-
-// Performs a virtual call through a vtable.
-#define TABLE_CALL(pos, table)    \
-    g_inductive = get(pos);       \
-    g_vtable = &table[4];         \
-    g_vtable[g_inductive->tag](); \
-  /**/
-
-// ----
-
+/**
+ * @brief Handles casting tricks.  Gets the nth child of the node when this is
+ * in scope.
+ */
+#define CHILD(n) (*reinterpret_cast<NodePtr *>(&this->args[n]))
 #define SPRITE_SHOW(z,n,_) std::cout << " "; CHILD(n)->show();
 
 // Declares the constructor and children.
@@ -560,11 +520,8 @@ namespace sprite
     }                                                                  \
   /**/
 
-/**
- * @brief Handles casting tricks.  Gets the nth child of the node when this is
- * in scope.
- */
-#define CHILD(n) (*reinterpret_cast<NodePtr *>(&this->args[n]))
+
+#include "sprite/dt_strategy.hpp"
 
 namespace sprite
 {

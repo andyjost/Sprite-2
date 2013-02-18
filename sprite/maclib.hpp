@@ -44,23 +44,29 @@
 
 // ======
 
-// A0 = (z,name,path,ns,CD) where
+// A0 = (z,path,ns,CD,mbranch,mleaf) where
 //     z: the next available recursion depth for REPEAT
-//     name: the function name to generate.
 //     path: the path to the current node in the definitional tree (a sequence
 //           of ints).
 //     ns: the namespace associated with the constructor definition (CD).
 //     CD: the constructor definition at the current pdt node.
+//     mbranch: the macro function to invoke when a branch is encountered.  The
+//              arguments will be (A0,pos,TD,...), where the variadic arguments
+//              are the child pdts.
+//     mleaf: the macro function to invoke when a leaf is encountered.  The
+//              arguments will be (A0,rule), where rule is the user-supplied
+//              rewrite rule.
 
-#define NEW_A0(z,name,path,ns,CD) (z,name,path,ns,CD)
-#define A0_Z(A0)    BOOST_PP_TUPLE_ELEM(5,0,A0)
-#define A0_NAME(A0) BOOST_PP_TUPLE_ELEM(5,1,A0)
-#define A0_PATH(A0) BOOST_PP_TUPLE_ELEM(5,2,A0)
-#define A0_NS(A0)   BOOST_PP_TUPLE_ELEM(5,3,A0)
-#define A0_CD(A0)   BOOST_PP_TUPLE_ELEM(5,4,A0)
+#define NEW_A0(z,path,ns,CD,mbranch,mleaf) (z,path,ns,CD,mbranch,mleaf)
+#define A0_Z(A0)       BOOST_PP_TUPLE_ELEM(6,0,A0)
+#define A0_PATH(A0)    BOOST_PP_TUPLE_ELEM(6,1,A0)
+#define A0_NS(A0)      BOOST_PP_TUPLE_ELEM(6,2,A0)
+#define A0_CD(A0)      BOOST_PP_TUPLE_ELEM(6,3,A0)
+#define A0_MBRANCH(A0) BOOST_PP_TUPLE_ELEM(6,4,A0)
+#define A0_MLEAF(A0)   BOOST_PP_TUPLE_ELEM(6,5,A0)
 // ----
 // Expands to the fully-qualified name of the constructor in A0.
-#define A0_CTORNAME(A0) A0_NS(A0) CD_IDENT(A0_CD(A0))
+#define A0_CTORNAME(A0) A0_NS(A0)CD_IDENT(A0_CD(A0))
 
 // A1 = (A0,TD,pdts)
 //     A0: an A0 structure
@@ -76,29 +82,32 @@
 #define A1_TO_A0_I(A0,TD,pdts,z,n)            \
     NEW_A0(                                   \
         z                                     \
-      , A0_NAME(A0)                           \
       , BOOST_PP_SEQ_PUSH_BACK(A0_PATH(A0),n) \
       , TD_NS(TD)                             \
       , BOOST_PP_SEQ_ELEM(n,TD_CDS(TD))       \
+      , A0_MBRANCH(A0)                        \
+      , A0_MLEAF(A0)                          \
       )                                       \
   /**/
 
-#define BEGIN_FUNCTION(A0, suffix) void FUNCTION_NAME(A0, suffix)() {
-#define END_FUNCTION }
-
-#define FUNCTION_NAME(A0, suffix) BOOST_PP_CAT(FN_I(A0_NAME(A0),A0_PATH(A0)), suffix)
-#define FN_I(name,path) FN_III(name,BOOST_PP_SEQ_POP_FRONT(BOOST_PP_SEQ_TRANSFORM(FN_II,_,path)))
-#define FN_II(s,data,elem) BOOST_PP_CAT(data,elem)
-#define FN_III(name,path) FN_IV(BOOST_PP_SEQ_PUSH_FRONT(path,name))
-#define FN_IV(path) BOOST_PP_SEQ_CAT(path())
+// Builds an identifier that includes the path (taken from A0).
+#define IDENTIFIER(base,A0,suffix) BOOST_PP_CAT(ID_I(base,A0_PATH(A0)),suffix)
+#define ID_I(name,path) ID_III(name,BOOST_PP_SEQ_POP_FRONT(BOOST_PP_SEQ_TRANSFORM(ID_II,_,path)))
+#define ID_II(s,data,elem) BOOST_PP_CAT(data,elem)
+#define ID_III(name,path) ID_IV(BOOST_PP_SEQ_PUSH_FRONT(path,name))
+#define ID_IV(path) BOOST_PP_SEQ_CAT(path())
 
 #define CALL(macro,A0) BOOST_PP_CAT(macro##_,A0_Z(A0))
 #define REPEAT(A0) CALL(REPEAT,A0)
 
-#define DEFINITIONAL_TREE(...)           \
-    DT_START(                            \
-        NEW_A0(1,dt,BOOST_PP_SEQ_NIL,,)  \
-      , TUPLE_TO_ARRAY(((__VA_ARGS__)))) \
+// Recursively expands a definitional tree specification.  mbranch is a macro
+// that is called for each branch.  mleaf is a macro that is called for each
+// leaf.  dtree is the definitional tree specification.
+#define DEFINITIONAL_TREE(mbranch,mleaf,dtree)      \
+    DT_START(                                       \
+        NEW_A0(1,BOOST_PP_SEQ_NIL,,,mbranch,mleaf)  \
+      , TUPLE_TO_ARRAY((dtree))                     \
+      )
   /**/
 #define DT_START(A0,pdts)               \
     CALL(DT_I,A0)(                      \
@@ -109,32 +118,8 @@
       )                                 \
   /**/
 
-#define DTB_I(A0,pos,TD,...)                                                \
-    /* The number of constructors in type must match the number of extra */ \
-    /* args provided.                                                    */ \
-    BOOST_PP_ASSERT(                                                        \
-        BOOST_PP_EQUAL(TD_LEN(TD), VA_LEN(__VA_ARGS__))                     \
-      )                                                                     \
-                                                                            \
-    /* Define the function to handle this branch in the DTree. */           \
-    static BEGIN_FUNCTION(A0,)                                              \
-      typedef A0_CTORNAME(A0) inductive_type;                               \
-      static procedure vtable[] = { &fail, &fwd, &choice, &oper             \
-          REPEAT(A0)(VA_LEN(__VA_ARGS__),DTB_II,A0)                         \
-        };                                                                  \
-      TABLE_CALL(pos, vtable)                                               \
-    END_FUNCTION                                                            \
-  /**/
-#define DTB_II(z,n,A0) , &this_type::FUNCTION_NAME(A0, _##n)
-
-#define DTL(A0,rule)                          \
-    static BEGIN_FUNCTION(A0,)                \
-      typedef A0_CTORNAME(A0) inductive_type; \
-      rule                                    \
-    END_FUNCTION                              \
-  /**/
-
 #define TUPLE_TO_ARRAY(z) (VA_LEN z,z)
+#define VA_HEAD(head,...) head
 
 #define VA_LEN(...) VA_LEN_I(__VA_ARGS__,8,7,6,5,4,3,2,1)
 #define VA_LEN_I(_1,_2,_3,_4,_5,_6,_7,_8,n,...) n
@@ -144,16 +129,16 @@
 #define DT_III_1(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_1(x) x
 #define DT_V_1(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_1(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_1(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_1(A0,rule) DTL(A0,rule)
+#define DT_LEAF_1(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_2(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -161,16 +146,16 @@
 #define DT_III_2(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_2(x) x
 #define DT_V_2(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_2(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_2(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_2(A0,rule) DTL(A0,rule)
+#define DT_LEAF_2(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_3(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -178,16 +163,16 @@
 #define DT_III_3(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_3(x) x
 #define DT_V_3(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_3(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_3(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_3(A0,rule) DTL(A0,rule)
+#define DT_LEAF_3(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_4(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -195,16 +180,16 @@
 #define DT_III_4(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_4(x) x
 #define DT_V_4(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_4(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_4(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_4(A0,rule) DTL(A0,rule)
+#define DT_LEAF_4(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_5(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -212,16 +197,16 @@
 #define DT_III_5(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_5(x) x
 #define DT_V_5(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_5(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_5(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_5(A0,rule) DTL(A0,rule)
+#define DT_LEAF_5(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_6(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -229,16 +214,16 @@
 #define DT_III_6(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_6(x) x
 #define DT_V_6(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_6(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_6(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_6(A0,rule) DTL(A0,rule)
+#define DT_LEAF_6(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_7(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -246,16 +231,16 @@
 #define DT_III_7(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_7(x) x
 #define DT_V_7(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_7(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_7(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_7(A0,rule) DTL(A0,rule)
+#define DT_LEAF_7(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 
 #define DT_I_8(func,A0,TD,pdts) REPEAT(A0)(BOOST_PP_ARRAY_SIZE(pdts),func,NEW_A1(A0,TD,pdts))
@@ -263,16 +248,16 @@
 #define DT_III_8(func,A0,pdt) CALL(DT_IV,A0)(func BOOST_PP_ARRAY_DATA(BOOST_PP_ARRAY_INSERT(pdt,1,A0)))
 #define DT_IV_8(x) x
 #define DT_V_8(cmd,A0,...) CALL(cmd,A0)(A0,##__VA_ARGS__)
-#define DT_BRANCH_8(A0,pos,TD,...)   \
-    DTB_I(A0,pos,TD,__VA_ARGS__)      \
-    CALL(DT_I,A0)(                    \
-        CALL(DT_II,A0)                \
-      , A0                            \
-      , TD_COND(TD)                   \
-      , TUPLE_TO_ARRAY((__VA_ARGS__)) \
-      )                               \
+#define DT_BRANCH_8(A0,pos,TD,...)       \
+    A0_MBRANCH(A0)(A0,pos,TD,__VA_ARGS__) \
+    CALL(DT_I,A0)(                        \
+        CALL(DT_II,A0)                    \
+      , A0                                \
+      , TD_COND(TD)                       \
+      , TUPLE_TO_ARRAY((__VA_ARGS__))     \
+      )                                   \
   /**/
-#define DT_LEAF_8(A0,rule) DTL(A0,rule)
+#define DT_LEAF_8(A0,rule) A0_MLEAF(A0)(A0,rule)
 
 #define REPEAT_1(c,m,d) REPEAT_1_I(c,m,d)
 #define REPEAT_1_I(c,m,d) REPEAT_1_##c(m,d)

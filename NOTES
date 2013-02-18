@@ -30,3 +30,7 @@
 
     - Measure the relative time for pattern matching and rewriting to guide
       optimization.
+
+2/18/2013
+  - Do in-place successors actually help?  How much?  It would be nice if the indexing
+    rules were more consistent.
