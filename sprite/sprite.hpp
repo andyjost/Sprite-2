@@ -7,3 +7,4 @@
 #include "sprite/node.hpp"
 #include "sprite/builtins.hpp"
 #include "sprite/evaluation.hpp"
+#include "sprite/operations.hpp"

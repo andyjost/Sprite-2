@@ -129,32 +129,4 @@ namespace sprite
   #define SPRITE_LIB_Bool                                    \
       (lib, ((BoolNode, "False", 0))((BoolNode, "True", 0))) \
     /**/
-
-
-  // ==== Math Operations ====
-  #define SPRITE_BINOP_DECL(name, type, op)                          \
-      struct name : Node                                             \
-      {                                                              \
-        SPRITE_NODE_PREAMBLE(name, name, #op, 2, OPER)               \
-        virtual void N() { H(); }                                    \
-        virtual void H()                                             \
-        {                                                            \
-          (*this)[0]->H(); (*this)[1]->H();                          \
-          g_redex = this;                                            \
-          rewrite<type>((*this)[0]->value() op (*this)[1]->value()); \
-        }                                                            \
-      };                                                             \
-    /**/
-  
-  SPRITE_BINOP_DECL(AddNode, IntNode, +)
-  SPRITE_BINOP_DECL(SubNode, IntNode, -)
-  SPRITE_BINOP_DECL(MulNode, IntNode, *)
-  SPRITE_BINOP_DECL(DivNode, IntNode, /)
-  SPRITE_BINOP_DECL(ModNode, IntNode, %)
-  SPRITE_BINOP_DECL(LtNode, BoolNode, <)
-  SPRITE_BINOP_DECL(GtNode, BoolNode, >)
-  SPRITE_BINOP_DECL(LeNode, BoolNode, <=)
-  SPRITE_BINOP_DECL(GeNode, BoolNode, >=)
-  SPRITE_BINOP_DECL(EqNode, BoolNode, ==)
-  SPRITE_BINOP_DECL(NeNode, BoolNode, !=)
 }
