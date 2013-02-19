@@ -33,13 +33,23 @@ options to the compiler.  They are:
   SPRITE_GC_MODE
       Selects the garbage collection mode.  Possible values are:
           0
-              Use reference counting (default).
+              Use reference counting.
           1
-              Use gargabe collection.
+              Use gargabe collection (default).
           2
               Use crosschecked garbage collection; keep the reference count and
               assert that it is zero every time a node is reclaimed by the
               collector.
+
+  SPRITE_EXEC_MODE
+      Selects the execution strategy.  Possible values are:
+          0
+              Use the "function-table" strategy, which relies on a table of
+              function addresses and function calls for pattern matching
+              (default).
+          1
+              Use the "label-table" strategy, which relies on a table of jump
+              labels and goto* for pattern matching.
 
   TRACEREFS
       Traces every change to a reference count.

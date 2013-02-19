@@ -45,6 +45,11 @@ namespace sprite
     virtual void H() = 0;
     virtual int64 value()
       { throw RuntimeError("error getting the value of a " + this->name()); }
+
+    // Same as value() but saves the cost of a virtual call.  Assumes the
+    // result is actually an int.
+    int64 fastvalue(); // defined in builtins.hpp
+
     virtual size_t arity() const = 0;
     // The trailing underscore avoids a confusion between Node::apply and
     // lib::apply, when unqualified names are used.
@@ -300,29 +305,62 @@ namespace sprite
   // With reference counting, the arguments must be taken by value to force a
   // copy.  This avoids freeing them early when the destructor is called.  With
   // garbage collection, the NodePtr is just a Node *, so the copy is free.
-  #define F(z,n,_)                                           \
-      template<typename TgtType>                             \
-      inline void rewrite(BOOST_PP_ENUM_PARAMS(n,NodePtr a)) \
-      {                                                      \
-        g_redex->~Node(); /* optimized away if no dtor */    \
-        new(g_redex) TgtType(BOOST_PP_ENUM_PARAMS(n,a));     \
-        trace();                                             \
-      }                                                      \
-    /**/
+  //
+  // In function-table mode, the redex is a global variable.  In label-table
+  // mode, it is an explicit parameter.
+  #if SPRITE_IS_FT
+    #define F(z,n,_)                                           \
+        template<typename TgtType>                             \
+        inline void rewrite(BOOST_PP_ENUM_PARAMS(n,NodePtr a)) \
+        {                                                      \
+          g_redex->~Node(); /* optimized away if no dtor */    \
+          new(g_redex) TgtType(BOOST_PP_ENUM_PARAMS(n,a));     \
+          trace();                                             \
+        }                                                      \
+      /**/
+  #endif
+  #if SPRITE_IS_LT
+    #define F(z,n,_)                                                \
+        template<typename TgtType>                                  \
+        inline void rewrite(                                        \
+            Node * redex BOOST_PP_ENUM_TRAILING_PARAMS(n,NodePtr a) \
+          )                                                         \
+        {                                                           \
+          redex->~Node(); /* optimized away if no dtor */           \
+          new(redex) TgtType(BOOST_PP_ENUM_PARAMS(n,a));            \
+          trace();                                                  \
+        }                                                           \
+      /**/
+  #endif
   BOOST_PP_REPEAT(SPRITE_ARITY_BOUND,F,)
   #undef F
 
   // For built-in Int and Bool types.
-  template<typename TgtType, typename ArgType>
-  inline void rewrite(
-      ArgType value
-    , typename enable_if<is_integral<ArgType> >::type* =0
-    )
-  {
-    g_redex->~Node(); // optimized away if no dtor
-    new(g_redex) TgtType(value);
-    trace();
-  }
+  #if SPRITE_IS_FT
+    template<typename TgtType, typename ArgType>
+    inline void rewrite(
+        ArgType value
+      , typename enable_if<is_integral<ArgType> >::type* =0
+      )
+    {
+      g_redex->~Node(); // optimized away if no dtor
+      new(g_redex) TgtType(value);
+      trace();
+    }
+  #endif
+
+  #if SPRITE_IS_LT
+    template<typename TgtType, typename ArgType>
+    inline void rewrite(
+        Node * redex, ArgType value
+      , typename enable_if<is_integral<ArgType> >::type* =0
+      )
+    {
+      redex->~Node(); // optimized away if no dtor
+      new(redex) TgtType(value);
+      trace();
+    }
+  #endif
 
   // This construct function (as opposed to new) is needed when working with
   // mutually-recursive operations.  Is is legal to say construct<T>(...) but
@@ -520,8 +558,13 @@ namespace sprite
     }                                                                  \
   /**/
 
+#if SPRITE_IS_FT
+#include "sprite/ft_strategy.hpp"
+#endif
 
-#include "sprite/dt_strategy.hpp"
+#if SPRITE_IS_LT
+#include "sprite/lt_strategy.hpp"
+#endif
 
 namespace sprite
 {

@@ -34,6 +34,21 @@
 #  define SPRITE_GC 1
 #endif
 
+// The execution strategy is controlled by this variable.
+//   0: use the "function-table" scheme
+//   1: use the "label-table" scheme
+#ifndef SPRITE_EXEC_MODE
+#  define SPRITE_EXEC_MODE 0
+#endif
+
+#if SPRITE_EXEC_MODE == 0
+#  define SPRITE_IS_FT 1
+#  define SPRITE_IS_LT 0
+#elif SPRITE_EXEC_MODE == 1
+#  define SPRITE_IS_FT 0
+#  define SPRITE_IS_LT 1
+#endif
+
 // The destructor is not used in GC mode unless TRACEALLOC was set.
 #if !defined SPRITE_USE_DTOR
 #  if !SPRITE_GC || TRACEALLOC
@@ -55,6 +70,9 @@ namespace sprite
   typedef Node * NodePtr;
   #endif
 
+  // Configure global register variables ("dt" mode only, except for the free
+  // list).
+  //
   // Note: According to the x86_64 ABI:
   //
   //     "Registers %rbp, %rbx and %r12 through %r15 belong to the calling
@@ -64,12 +82,14 @@ namespace sprite
   // There is no need to recompile shared objects when using these global
   // registers.
 
+  #if SPRITE_IS_FT
   /// Global pointer to the current vtable.
   register procedure * g_vtable asm ("r15");
   /// Global pointer to the current redex.
   register Node * g_redex asm ("r14");
   /// Global pointer to the current inductive node.
   register Node * g_inductive asm ("r13");
+  #endif
 
   #ifdef SPRITE_NO_REGISTER_FREE_LIST
   void * g_free_list;

@@ -1,11 +1,13 @@
 /**
  * @file
- * @brief Defines the macros for the "dt" execution strategy.
+ * @brief Defines the macros and implementation functions for the
+ * "function-table" execution strategy.
  *
- * Defines RDX, IND, REWRITE, CONSTRUCTOR, OPERATION.
+ * Defines RDX, IND, REWRITE, CONSTRUCTOR, OPERATION, cond.
  */
 
 #pragma once
+#include "sprite/builtins.hpp"
 
 // References the current redex.
 #define RDX (*static_cast<this_type*>(g_redex))
@@ -30,8 +32,6 @@
 // Note: this macro is also used in partial.hpp.
 #define CTOR_I(z,n,_) (*this)[n]->N();
 
-// ----
-
 // Defines an operation node.
 #define OPERATION(ident, label, arity, dtree)                \
     struct ident : Node                                      \
@@ -44,6 +44,8 @@
       DEFINITIONAL_TREE(BRANCH,LEAF,dtree)                   \
     };                                                       \
   /**/
+
+// ----
 
 // Handles branches.
 #define BRANCH(A0,pos,TD,...)                                               \
@@ -76,3 +78,43 @@
     }                                         \
   /**/
 
+namespace sprite
+{
+  /** 
+   * Gives the default type of the inductive node.  Inside of a scope that
+   * performs a rewrite step, this may be redefined.  Then the expression
+   * ind<inductive_type>() always gives the inductive node, cast to its correct
+   * type.
+   */
+  typedef Node inductive_type;
+
+  /// Casts the current inductive node to a particular target type.
+  template<typename NodeType> inline NodeType & ind()
+    { return *static_cast<NodeType *>(g_inductive); }
+
+  // Default H action for failure nodes.
+  inline void fail() { REWRITE(FailNode); }
+  // Default H action for FWD nodes.
+  inline void fwd()
+  {
+    g_inductive = get((static_cast<FwdNode *>(g_inductive))->dest);
+    g_vtable[g_inductive->tag]();
+  }
+  // Default H action for CHOICE nodes.
+  inline void choice() { throw RuntimeError(); }
+  // Default H action for OPER nodes.
+  inline void oper() { g_inductive->H(); }
+
+  namespace lib { struct test; }
+
+  inline bool cond(NodePtr const & expr)
+  {
+    Node * redex = g_redex;
+    Node * inductive = g_inductive;
+    LOCAL_NODE(tmp, lib::test, expr);
+    tmp->N();
+    g_redex = redex;
+    g_inductive = inductive;
+    return is_true(tmp);
+  }
+}

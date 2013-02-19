@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sprite/node.hpp"
-#include "sprite/evaluation.hpp"
 
 namespace sprite
 {
@@ -25,4 +24,28 @@ namespace sprite
   SPRITE_BINOP_DECL(GeNode, BoolNode, >=)
   SPRITE_BINOP_DECL(EqNode, BoolNode, ==)
   SPRITE_BINOP_DECL(NeNode, BoolNode, !=)
+
+  namespace lib
+  {
+    // test True = True
+    // test False = False
+    // -- Tests the true/false value of x and forces the result to be exactly
+    // -- True or False (e.g., removes Fwd nodes).
+    OPERATION(test, "test", 1
+      , (DT_BRANCH, RDX[0], SPRITE_LIB_Bool
+          , (DT_LEAF, REWRITE(BoolNode, false))
+          , (DT_LEAF, REWRITE(BoolNode, true))
+          )
+      )
+
+
+    // if False then _ else y = y
+    // if True  then x else _ = x
+    OPERATION(ifThenElse, "ifThenElse", 3
+      , (DT_BRANCH, RDX[0], SPRITE_LIB_Bool
+	        , (DT_LEAF, REWRITE(FwdNode, RDX[2]))
+	        , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
+          )
+      )
+  }
 }

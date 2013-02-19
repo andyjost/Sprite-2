@@ -77,6 +77,15 @@ namespace sprite
 
   namespace lib { using sprite::IntNode; }
 
+  inline int64 Node::fastvalue()
+  {
+    #ifdef NDEBUG
+      return static_cast<IntNode *>(this)->m_value;
+    #else
+      return this->value();
+    #endif
+  }
+
   // This type is manually-defined (i.e., it is not passed to TYPE).  It can be
   // used with DT_BRANCH to reduce an integer expression to HNF.  The value
   // method can subsequently be called to unbox the value.

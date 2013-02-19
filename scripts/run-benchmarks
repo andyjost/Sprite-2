@@ -42,6 +42,9 @@ ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
 TMP=`mktemp -d`
 trap "rm -rf $TMP" EXIT
 
+# Needed for certain configurations -- not good...
+ulimit -s 32768
+
 for BENCHMARK_NAME in $@
 do
   EXE=$ROOT/bin/benchmark-$BENCHMARK_NAME
