@@ -2,7 +2,7 @@
 #include "sprite/sprite.hpp"
 #include "sprite/lib/list.hpp"
 
-namespace sprite { namespace module { namespace reverse
+namespace sprite { namespace module { namespace reverse4x
 {
   /*
   -- Haskell benchmark: naive reverse on buil-in lists
@@ -61,13 +61,13 @@ namespace sprite { namespace module { namespace reverse
 
   using namespace sprite;
 
-  #define MODULE_7reverse_TP_3Nat                                 \
-      (module::reverse, ((ZeroNode, "O", 0))((SuccNode, "S", 1))) \
+  #define MODULE_9reverse4x_TP_3Nat                                 \
+      (module::reverse4x, ((ZeroNode, "O", 0))((SuccNode, "S", 1))) \
     /**/
-  TYPE(MODULE_7reverse_TP_3Nat)
+  TYPE(MODULE_9reverse4x_TP_3Nat)
 
   OPERATION(MyAddNode, "add", 2
-    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
+    , (DT_BRANCH, RDX[0], MODULE_9reverse4x_TP_3Nat
         , (DT_LEAF, REWRITE(FwdNode, RDX[1]))
         , (DT_LEAF, REWRITE(SuccNode, NODE(MyAddNode, IND[0], RDX[1])))
         )
@@ -78,7 +78,7 @@ namespace sprite { namespace module { namespace reverse
     )
 
   OPERATION(MultNode, "mult", 2
-    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
+    , (DT_BRANCH, RDX[0], MODULE_9reverse4x_TP_3Nat
         , (DT_LEAF, REWRITE(ZeroNode))
         , (DT_LEAF, REWRITE(MyAddNode, RDX[1], NODE(MultNode, IND[0], RDX[1])))
         )
@@ -96,27 +96,69 @@ namespace sprite { namespace module { namespace reverse
   OPERATION(Nat256M, "nat256M", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat16M), NODE(Nat16))))
   OPERATION(Nat1G, "nat1G", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat256M), NODE(Four))))
 
-  #define MODULE_7reverse_TP_6MyBool                                      \
-      (module::reverse, ((MyTrue, "MyTrue", 0))((MyFalse, "MyFalse", 0))) \
+  #define MODULE_9reverse4x_TP_6MyBool                                      \
+      (module::reverse4x, ((MyTrue, "MyTrue", 0))((MyFalse, "MyFalse", 0))) \
     /**/
-  TYPE(MODULE_7reverse_TP_6MyBool)
+  TYPE(MODULE_9reverse4x_TP_6MyBool)
 
+  // rev with 4x unrolling to reduce the number of rewrites.
+  // rev [] = []
+  // rev (x:[]) = [x]
+  // rev (x:x':[]) = [x',x]
+  // rev (x:x':x'':[]) = [x'',x',x]
+  // rev (x:x':x'':x''':xs) = append (rev xs) [x''',x'',x',x]
   OPERATION(RevNode, "rev", 1
     , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(lib::Nil))
-        , (DT_LEAF
-            , REWRITE(
-                  lib::append
-                , NODE(RevNode, IND[1])
-                , NODE(lib::Cons, IND[0]
-                , lib::nil)
+        , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+            , (DT_LEAF, REWRITE(lib::Cons, RDX[0]->at(0), lib::nil))
+            , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+                , (DT_LEAF
+                    , REWRITE(
+                          lib::Cons
+                        , RDX[0]->at(1)->at(0)
+                        , NODE(lib::Cons, RDX[0]->at(0), lib::nil)
+                        )
+                    )
+                , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+                    , (DT_LEAF
+                        , REWRITE(
+                              lib::Cons
+                            , RDX[0]->at(1)->at(1)->at(0)
+                            , NODE(
+                                  lib::Cons
+                                , RDX[0]->at(1)->at(0)
+                                , NODE(lib::Cons, RDX[0]->at(0), lib::nil)
+                                )
+                            )
+                        )
+                    , (DT_LEAF
+                        , REWRITE(
+                              lib::append
+                            , NODE(RevNode, IND[1])
+                            , NODE(
+                                 lib::Cons
+                               , RDX[0]->at(1)->at(1)->at(1)->at(0)
+                               , NODE(
+                                     lib::Cons
+                                   , RDX[0]->at(1)->at(1)->at(0)
+                                   , NODE(
+                                         lib::Cons
+                                       , RDX[0]->at(1)->at(0)
+                                       , NODE(lib::Cons, RDX[0]->at(0), lib::nil)
+                                       )
+                                   )
+                               )
+                            )
+                        )
+                    )
                 )
             )
         )
     )
 
   OPERATION(NatListNode, "natList", 1
-    , (DT_BRANCH, RDX[0], MODULE_7reverse_TP_3Nat
+    , (DT_BRANCH, RDX[0], MODULE_9reverse4x_TP_3Nat
         , (DT_LEAF, REWRITE(lib::Nil))
         , (DT_LEAF, REWRITE(
               lib::Cons
@@ -126,10 +168,25 @@ namespace sprite { namespace module { namespace reverse
         )
     )
 
+  // isList with 4x unrolling to reduce the number of rewrites.
+  // isList [] = MyTrue
+  // isList (_:[]) = MyTrue
+  // isList (_:_:[]) = MyTrue
+  // isList (_:_:_:[]) = MyTrue
+  // isList (_:_:_:xs = isList xs
   OPERATION(IsListNode, "isList", 1
     , (DT_BRANCH, RDX[0], SPRITE_LIB_List
         , (DT_LEAF, REWRITE(MyTrue))
-        , (DT_LEAF, REWRITE(IsListNode, IND[1]))
+        , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+            , (DT_LEAF, REWRITE(MyTrue))
+            , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+                , (DT_LEAF, REWRITE(MyTrue))
+                , (DT_BRANCH, ((lib::Cons&)IND)[1], SPRITE_LIB_List
+                    , (DT_LEAF, REWRITE(MyTrue))
+                    , (DT_LEAF, REWRITE(IsListNode, IND[1]))
+                    )
+                )
+            )
         )
     )
 
