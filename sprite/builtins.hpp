@@ -91,6 +91,10 @@ namespace sprite
   // method can subsequently be called to unbox the value.
   #define SPRITE_LIB_UnboxedInt (lib, ((IntNode, "Int", 0)))
 
+  // Interactions directly with unboxed integers.
+  inline int64 unbox(NodePtr & x) { x->N(); return x->value(); }
+  inline NodePtr box(int64 x) { return NODE(IntNode, x); }
+
 
   // ==== Bool ====
   struct BoolNode;

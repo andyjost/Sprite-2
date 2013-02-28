@@ -117,4 +117,14 @@ namespace sprite
     g_inductive = inductive;
     return is_true(tmp);
   }
+
+  // Saves and restores a rewrite scope to allow other work to happen.
+  struct Scope
+  {
+    Scope() : m_redex(g_redex) {}
+    ~Scope() { g_redex = m_redex; }
+  private:
+    Node * const m_redex;
+  };
+
 }
