@@ -18,19 +18,6 @@ namespace sprite { namespace module { namespace takn
   using namespace sprite;
   using namespace lib::constants;
 
-  // ---- Moved to sprite/builtins.hpp ----
-  // inline int64 unbox(NodePtr & x) { x->N(); return x->value(); }
-  // inline NodePtr box(int64 x) { return NODE(IntNode, x); }
-
-  // ---- Moved to sprite/ft_strategy.hpp ----
-  // struct Scope
-  // {
-  //   Scope() : m_redex(g_redex) {}
-  //   ~Scope() { g_redex = m_redex; }
-  // private:
-  //   Node * const m_redex;
-  // };
-
   namespace eager
   {
     int64 tak(int64 x, int64 y, int64 z)
@@ -66,10 +53,11 @@ namespace sprite { namespace module { namespace takn
   OPERATION(TakNode, "tak", 3
     , (DT_LEAF,
           NodePtr result;
-          {
-            Scope();
+
+          BEGIN_EAGER
             result = eager::tak(unbox(RDX[0]), unbox(RDX[1]), RDX[2]);
-          }
+          END_EAGER
+
           REWRITE(FwdNode, result);
         )
     )

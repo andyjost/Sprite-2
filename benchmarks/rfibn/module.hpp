@@ -16,7 +16,6 @@ namespace sprite { namespace module { namespace rfibn
   using lib::constants::i1;
   using lib::constants::i2;
 
-  // This demonstrates an unboxing optimization.
   namespace eager
   {
     inline int64 nfib(int64 n)
@@ -27,10 +26,11 @@ namespace sprite { namespace module { namespace rfibn
     , (DT_BRANCH, RDX[0], SPRITE_LIB_UnboxedInt
         , (DT_LEAF,
               NodePtr result;
-              {
-                Scope();
+
+              BEGIN_EAGER
                 result = box(eager::nfib(unbox(RDX[0])));
-              }
+              END_EAGER
+
               REWRITE(FwdNode, result);
             )
         )

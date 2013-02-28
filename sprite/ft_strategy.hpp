@@ -18,6 +18,9 @@
 // Performs a rewrite at the current redex.
 #define REWRITE(type, ...) rewrite<type>(__VA_ARGS__);
 
+#define BEGIN_EAGER try { EagerScope const __scope_lock;
+#define END_EAGER } catch(ComputationFailed const &) { return fail(); }
+
 // ----
 
 // Defines a constructor node.
@@ -119,12 +122,23 @@ namespace sprite
   }
 
   // Saves and restores a rewrite scope to allow other work to happen.
-  struct Scope
+  struct EagerScope
   {
-    Scope() : m_redex(g_redex) {}
-    ~Scope() { g_redex = m_redex; }
+    EagerScope() : m_redex(g_redex) {}
+    ~EagerScope() { g_redex = m_redex; }
   private:
     Node * const m_redex;
   };
+
+  // Head normalize a node and return a 
+  inline NodePtr H(NodePtr x)
+  {
+    x->H();
+    while(x->tag == FWD)
+      x = ((FwdNode *)get(x))->dest;
+    if(x->tag == FAIL) { throw ComputationFailed(); }
+    if(x->tag == CHOICE) { throw RuntimeError(); }
+    return x;
+  }
 
 }

@@ -139,6 +139,9 @@ namespace sprite
     std::string m_msg;
   };
 
+  // Indicates an eager evaluation produced a failure.
+  struct ComputationFailed {};
+
   // The node requires space for 2 pointers (vptr + tag fields) plus
   // extra to hold the children.  The extra space must be at least one
   // pointer (to hold a pointer to the list of children), and must be
