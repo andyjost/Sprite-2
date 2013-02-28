@@ -1,5 +1,11 @@
 # The base configuration (shared by all configs).
 
 CFLAGS="-Wall -Wno-strict-aliasing"
-# INCLUDE="-I$HOME/build/gmain/3pty/boost/g2012.06/ -DSynopsys_Boost_Full_Set"
-INCLUDE="-I/u/josta/libs/boost"
+
+if [ "$(domainname)" == "synopsys.com" ]; then
+  # INCLUDE="-I$HOME/build/gmain/3pty/boost/g2012.06/ -DSynopsys_Boost_Full_Set"
+  INCLUDE="-I/remote/us03home4/ajost/slow/boost/boost_1_48_0/"
+else
+  INCLUDE="-I/u/josta/libs/boost"
+fi
+

@@ -72,3 +72,7 @@ options to the compiler.  They are:
       Enables special handling of if-then-else expressions to improve
       performance.
 
+  SPRITE_NO_REGISTER_FREE_LIST
+      Places the head of the node free list into a normal variable rather than
+      a dedicated register.
+
