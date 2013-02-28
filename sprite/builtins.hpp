@@ -53,6 +53,36 @@ namespace sprite
     #endif
   };
 
+  // Specialize rewrite for FwdNode to do path compression.
+  #if SPRITE_IS_FT
+    template<> inline void rewrite<FwdNode>(NodePtr x)
+    {
+      g_redex->~Node(); /* optimized away if no dtor */
+
+      // Compress the path.
+      Node * p = get(x);
+      while(p->tag == FWD)
+        p = get(((FwdNode *)p)->dest);
+
+      new(g_redex) FwdNode(p);
+      trace();
+    }
+  #endif
+
+  #if SPRITE_IS_LT
+    template<> inline void rewrite<FwdNode>(Node * redex, NodePtr x)
+    {
+      redex->~Node(); /* optimized away if no dtor */
+
+      // Compress the path.
+      Node * p = get(x);
+      while(p->tag == FWD)
+        p = get(((FwdNode *)p)->dest);
+
+      new(redex) FwdNode(p);
+      trace();
+    }
+  #endif
 
   // ==== Int ====
   struct IntNode : Node
@@ -142,4 +172,7 @@ namespace sprite
   #define SPRITE_LIB_Bool                                    \
       (lib, ((BoolNode, "False", 0))((BoolNode, "True", 0))) \
     /**/
+
+  // Interactions directly with unboxed Booleans.
+  inline NodePtr box(bool x) { return NODE(BoolNode, x); }
 }
