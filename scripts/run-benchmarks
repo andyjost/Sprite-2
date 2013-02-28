@@ -43,7 +43,8 @@ TMP=`mktemp -d`
 trap "rm -rf $TMP" EXIT
 
 # Needed for certain configurations -- not good...
-ulimit -s 32768
+# ulimit -s 32768
+ulimit -s 65536
 
 for BENCHMARK_NAME in $@
 do
