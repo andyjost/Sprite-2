@@ -51,8 +51,8 @@ namespace sprite { namespace module { namespace takn
   }
 
   OPERATION(TakNode, "tak", 3
-    , (DT_LEAF,
-          NodePtr result;
+    , (DT_LEAF
+        , NodePtr result;
 
           BEGIN_EAGER
             result = eager::tak(unbox(RDX[0]), unbox(RDX[1]), RDX[2]);
