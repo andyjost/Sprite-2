@@ -37,6 +37,6 @@ namespace sprite { namespace module { namespace rfibn
     )
 
   OPERATION(MainNode, "main", 0
-    , (DT_LEAF, REWRITE(nfib, NODE(IntNode, 35)))
+    , (DT_LEAF, REWRITE(nfib, NODE(IntNode, 40)))
     )
 }}}

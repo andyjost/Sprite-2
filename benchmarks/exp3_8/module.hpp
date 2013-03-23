@@ -80,7 +80,7 @@ namespace sprite { namespace module { namespace exp3_8
             , NODE(
                   MyPowNode
                 , NODE(FromIntegerNode, NODE(IntNode, 3))
-                , NODE(FromIntegerNode, NODE(IntNode, 8))
+                , NODE(FromIntegerNode, NODE(IntNode, 9))
                 )
             )
         )

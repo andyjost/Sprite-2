@@ -16,4 +16,4 @@ mypow x Z = S Z
 mypow x (S y) = mymul x (mypow x y)
 
 main = do
-  print $ myint (mypow (fromInteger_ 3) (fromInteger_ 8))
+  print $ myint (mypow (fromInteger_ 3) (fromInteger_ 9))

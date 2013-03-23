@@ -33,6 +33,6 @@ namespace sprite { namespace module { namespace tak
         )
     )
 
-  OPERATION(Goal1Node, "goal1", 0 ,(DT_LEAF, REWRITE(TakNode, i27, i16, i8)))
+  OPERATION(Goal1Node, "goal1", 0 ,(DT_LEAF, REWRITE(TakNode, i33, i17, i8)))
   OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal1Node)))
 }}}

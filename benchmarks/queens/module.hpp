@@ -38,6 +38,7 @@ namespace sprite { namespace module { namespace queens
   using lib::constants::i0;
   using lib::constants::i1;
   using lib::constants::i10;
+  using lib::constants::i12;
 
   // safe _ _ []    = True
   // safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
@@ -111,5 +112,5 @@ namespace sprite { namespace module { namespace queens
     )
 
 
-  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(nsoln, i10)))
+  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(nsoln, i12)))
 }}}

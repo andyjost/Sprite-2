@@ -10,5 +10,5 @@ safe _ _ []    = True
 safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
 
 main = do
-  print $ nsoln 10
+  print $ nsoln 12
 
