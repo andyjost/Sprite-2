@@ -49,112 +49,126 @@ namespace sprite { namespace module { namespace tree_insertn
     , (DT_LEAF, REWRITE(ModNode, NODE(AddNode, NODE(MulNode, a_, RDX[0]), b), m))
     )
 
-  // The change below makes performance worse.
-  #if 0
   namespace eager
   {
-    int64 count(NodePtr x)
-    {
-      static void * table[] = { &&nil, &&cons };
-
-      x = H(x);
-      assert(x->tag >= CTOR);
-      goto *table[x->tag];
-
-    nil:
+    int64 count01(NodePtr t) {
+      static void * utable[] = {
+          &&fail, &&fwd, &&choice, &&oper , &&leaf , &&branch
+        };
+      static void ** table = &utable[4];
+      goto *table[t->tag];
+    fail:
+      throw RuntimeError("Unexpected fail in count01");
+    choice:
+      throw RuntimeError("Unexpected choice in count01");
+    fwd:
+      t = (static_cast<FwdNode *>(get(t)))->dest;
+      goto *table[t->tag];
+    oper:
+      t->H();
+      goto *table[t->tag];
+    leaf:
       return 0;
-
-    cons:
-      return 1 + count(x->at(1)) + count(x->at(2));
+    branch:
+      return 1 + count01(t->at(1)) + count01(t->at(2));
     }
   }
 
   // ====== count ======
   OPERATION(CountNode, "count", 1
     , (DT_LEAF
-        , int64 result;
-
+        , int64 tmp;
           BEGIN_EAGER
-            result = eager::count(RDX[0]);
+            tmp = eager::count01(RDX[0]);
           END_EAGER
 
-          REWRITE(IntNode, result);
+          REWRITE(IntNode, tmp);
         )
     )
-  #endif
 
-  OPERATION(CountNode, "count", 1
-    , (DT_BRANCH, RDX[0], MODULE_12tree_insertn_TP_4Tree
-        , (DT_LEAF, REWRITE(IntNode, 0L))
-        , (DT_LEAF, REWRITE(
-              AddNode, i1, NODE(AddNode
-                , NODE(CountNode, IND[1])
-                , NODE(CountNode, IND[2]))
-                )
-            )
-        )
-    )
-      
   struct InsertNode;
 
   namespace eager
   {
-    NodePtr insert(NodePtr x, NodePtr ylr)
-    {
-        static void * table[] = { &&nil, &&cons };
-
-        ylr = H(ylr);
-        assert(ylr->tag >= CTOR);
-        goto *table[ylr->tag];
-
-      nil:
-        return NODE(Branch, x, leaf, leaf);
-
-      cons:
-      {
-        int64 x_ = unbox(x);
-        int64 y_ = unbox(ylr->at(0));
-        if(x_ < y_)
-          return NODE(
-              Branch, ylr->at(0), NODE(InsertNode, x, ylr->at(1)), ylr->at(2)
-            );
-        else if(y_ < x_)
-          return NODE(
-              Branch, ylr->at(0), ylr->at(1), NODE(InsertNode, x, ylr->at(2))
-            );
-        else if(x_ == y_)
-          return ylr;
-      }
-      throw RuntimeError();
+    NodePtr insert01(NodePtr x, NodePtr t) {
+      static void * utable[] = {
+          &&fail, &&fwd, &&choice, &&oper , &&leaf , &&branch
+        };
+      static void ** table = &utable[4];
+      goto *table[t->tag];
+    fail:
+      throw RuntimeError("Unexpected fail in insert01");
+    choice:
+      throw RuntimeError("Unexpected choice in insert01");
+      :qa
+    fwd:
+      t = (static_cast<FwdNode *>(get(t)))->dest;
+      goto *table[t->tag];
+    oper:
+      t->H();
+      goto *table[t->tag];
+    leaf:
+      // return sprite::construct<Branch>(x, leaf, leaf);
+      return NODE(Branch, x, leaf, leaf);
+    branch:
+      int64 x_ = unbox(x);
+      int64 y_ = unbox(t->at(0));
+      if(x_ < y_)
+        // return sprite::construct<Branch>(t->at(0), sprite::construct<InsertNode>(x, t->at(1)), t->at(2));
+        return NODE(Branch, t->at(0), NODE(InsertNode, x, t->at(1)), t->at(2));
+      else if(y_ < x_)
+        // return sprite::construct<Branch>(t->at(0), t->at(1), sprite::construct<InsertNode>(x, t->at(2)));
+        return NODE(Branch, t->at(0), t->at(1), NODE(InsertNode, x, t->at(2)));
+      else if(x_ == y_)
+        return t;
+      else throw RuntimeError("Impossible condition in insert01");
     }
   }
 
   // ====== insert ======
   OPERATION(InsertNode, "insert", 2
     , (DT_LEAF
-        , NodePtr result;
-
+        , NodePtr tmp;
           BEGIN_EAGER
-            result = eager::insert(RDX[0], RDX[1]);
+            NodePtr a0 = RDX[0];
+            NodePtr a1 = RDX[1];
+            tmp = eager::insert01(a0,a1);
           END_EAGER
-
-          REWRITE(FwdNode, result);
+          REWRITE(FwdNode, tmp);
         )
     )
 
   // ====== tree_loop ======
+  struct TreeLoopNode;
+
+  namespace eager
+  {
+    NodePtr treeloop01(int64 n, NodePtr x, NodePtr t) {
+    start:
+      if (n==0) {
+        // This should be a forward node,
+        // but is it forwarded by the caller --- MESSY
+        return t;
+      } else {
+        // tail recursion
+        n = n-1;
+        // Watch out the order !!!
+        t = insert01(NODE(ModNode,x,iterations),t);
+        x = NODE(RndNode,x);
+        goto start;
+      }
+    }
+  }
+
   OPERATION(TreeLoopNode, "tree_loop", 3
     , (DT_LEAF
-        , IF(
-              NODE(EqNode, RDX[0], i0)
-            , THEN(FwdNode, RDX[2])
-            , ELSE(
-                  TreeLoopNode
-                , NODE(SubNode, RDX[0], i1)
-                , NODE(RndNode, RDX[1])
-                , NODE(InsertNode, NODE(ModNode, RDX[1], modval), RDX[2])
-                )
-            )
+        , NodePtr tmp;
+          BEGIN_EAGER
+            int64 n = RDX[0]->value();
+            tmp = eager::treeloop01(n, RDX[1], RDX[2]);
+          END_EAGER
+          // Watch the callee if you remove FwdNode !!!
+          REWRITE(FwdNode, tmp);
         )
     )
 
