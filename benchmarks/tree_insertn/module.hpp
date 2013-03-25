@@ -100,7 +100,6 @@ namespace sprite { namespace module { namespace tree_insertn
       throw RuntimeError("Unexpected fail in insert01");
     choice:
       throw RuntimeError("Unexpected choice in insert01");
-      :qa
     fwd:
       t = (static_cast<FwdNode *>(get(t)))->dest;
       goto *table[t->tag];

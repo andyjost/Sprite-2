@@ -22,6 +22,7 @@ namespace sprite { namespace module { namespace reverse
   nat16 = mult four four
   nat256 = mult nat16 nat16
   nat4096 = mult nat256 nat16
+  nat8192 = mult nat4096 two
   nat16384 = mult nat4096 four
   nat256k = mult nat16384 nat16
   nat1M = mult nat256k four
@@ -46,6 +47,7 @@ namespace sprite { namespace module { namespace reverse
   goal1 = rev (natList nat16)
   goal2 = rev (natList nat256)
   goal3 = isList (rev (natList nat4096))
+  goal4a = isList (rev (natList nat8192))
   goal4 = isList (rev (natList nat16384))
   goal5 = isList (natList nat16384)
   goal6 = isList (natList nat16)
@@ -89,6 +91,7 @@ namespace sprite { namespace module { namespace reverse
   OPERATION(Nat16, "nat16", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Four), NODE(Four))))
   OPERATION(Nat256, "nat256", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat16), NODE(Nat16))))
   OPERATION(Nat4096, "nat4096", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat256), NODE(Nat16))))
+  OPERATION(Nat8192, "nat8192", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat4096), NODE(Two))))
   OPERATION(Nat16384, "nat16384", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat4096), NODE(Four))))
   OPERATION(Nat256k, "nat256k", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat16384), NODE(Nat16))))
   OPERATION(Nat1M, "nat1M", 0 , (DT_LEAF, REWRITE(MultNode, NODE(Nat256k), NODE(Four))))
@@ -145,6 +148,10 @@ namespace sprite { namespace module { namespace reverse
     , (DT_LEAF, REWRITE(IsListNode, NODE(RevNode, NODE(NatListNode, NODE(Nat4096)))))
     )
 
+  OPERATION(Goal4aNode, "goal4a", 0
+    , (DT_LEAF, REWRITE(IsListNode, NODE(RevNode, NODE(NatListNode, NODE(Nat8192)))))
+    )
+
   OPERATION(Goal4Node, "goal4", 0
     , (DT_LEAF, REWRITE(IsListNode, NODE(RevNode, NODE(NatListNode, NODE(Nat16384)))))
     )
@@ -185,5 +192,5 @@ namespace sprite { namespace module { namespace reverse
     , (DT_LEAF, REWRITE(IsListNode, NODE(NatListNode, NODE(Nat1G))))
     )
 
-  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal4Node)))
+  OPERATION(MainNode, "main", 0, (DT_LEAF, REWRITE(Goal4aNode)))
 }}}

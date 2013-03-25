@@ -13,6 +13,7 @@ four = double two
 nat16 = mult four four
 nat256 = mult nat16 nat16
 nat4096 = mult nat256 nat16
+nat8192 = mult nat4096 two
 nat16384 = mult nat4096 four
 nat256k = mult nat16384 nat16
 nat1M = mult nat256k four
@@ -37,7 +38,8 @@ isList (_:xs) = isList xs
 goal1 = rev (natList nat16)
 goal2 = rev (natList nat256)
 goal3 = isList (rev (natList nat4096))
+goal4a = isList (rev (natList nat8192))
 goal4 = isList (rev (natList nat16384))
 
 main = do
-    print $ goal4
+    print $ goal4a
