@@ -1,0 +1,30 @@
+#!/bin/bash
+
+ROOT=`(cd "\`dirname \"$0\"\`" > /dev/null ; cd ..; pwd)`
+OBJECT_ROOT="$ROOT/object_root"
+mkdir -p $OBJECT_ROOT
+LOG=$OBJECT_ROOT/count.log
+rm $LOG 2>&1 > /dev/null
+
+CONFIG_NAME="default"
+. $ROOT/config/$CONFIG_NAME
+if [ ! -f $ROOT/config/$CONFIG_NAME ]; then
+  echo "Config file \"$CONFIG_NAME\" not found under $ROOT/config" >&2
+  exit 1
+fi
+
+TMP=`mktemp`
+
+SUM=0
+FILES=`find src sprite/ -path sprite/lib -prune -o -name '*.?pp' -print`
+for FILE in $FILES; do
+  # echo $FILE
+  CMD="g++ $FILE -o $TMP -fpreprocessed -dD -E -P -I$ROOT $INCLUDE $CFLAGS >> $LOG 2>&1"
+  # echo $CMD
+  eval $CMD
+  S=`perl -nle 'print unless /^\s*$/' $TMP | wc -l`
+  SUM=`expr $SUM + $S`
+done
+
+echo $SUM
+
