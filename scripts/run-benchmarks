@@ -57,7 +57,7 @@ do
 
   if [[ $SHORT_OUTPUT -ne 0 ]]; then
     printf "%-20s " $BENCHMARK_NAME
-    \time --format="%E" -o $TMP/$BENCHMARK_NAME -- $EXE > /dev/null 2>&1
+    \time --format="%E %M" -o $TMP/$BENCHMARK_NAME -- $EXE > /dev/null 2>&1
 
     if [ "$?" -eq 0 ]; then
       echo `cat $TMP/$BENCHMARK_NAME`
