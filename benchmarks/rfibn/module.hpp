@@ -56,7 +56,7 @@ namespace sprite { namespace module { namespace rfibn
       ~_Summary()
       {
         std::cout
-          << "  #ahead calls         = " << ahead_calls << "\n"
+          << "  #ahead calls     = " << ahead_calls << "\n"
           << std::endl;
       }
     } _summary;
