@@ -35,6 +35,10 @@ namespace sprite
   boost::pool<> * static_node_allocator;
   boost::pool<> * child_allocator;
 
+  #ifdef SPRITE_INSTRUMENT_STEPCOUNTERS
+  unsigned long long g_stepcnt[3];
+  #endif
+
   // This function must be called in main, after static initialization is
   // complete.
   //
@@ -62,6 +66,15 @@ namespace sprite
     #if SPRITE_REFCNT
     Node * p = get(root);
     ++p->refcnt;
+    #endif
+
+    #ifdef SPRITE_INSTRUMENT_STEPCOUNTERS
+    std::cout
+      << "====== Step Count Summary ======\n"
+      << "  #rewrites        = " << g_stepcnt[N_REWRITE] << "\n"
+      << "  #allocations     = " << g_stepcnt[N_ALLOC] << "\n"
+      << "  #pattern matches = " << g_stepcnt[N_PATTERN_MATCH] << "\n"
+      << std::endl;
     #endif
 
     root = NodePtr();

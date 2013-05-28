@@ -313,6 +313,7 @@ namespace sprite
         template<typename TgtType>                             \
         inline void rewrite(BOOST_PP_ENUM_PARAMS(n,NodePtr a)) \
         {                                                      \
+          SPRITE_COUNT_REWRITE                                 \
           g_redex->~Node(); /* optimized away if no dtor */    \
           new(g_redex) TgtType(BOOST_PP_ENUM_PARAMS(n,a));     \
           trace();                                             \
@@ -326,6 +327,7 @@ namespace sprite
             Node * redex BOOST_PP_ENUM_TRAILING_PARAMS(n,NodePtr a) \
           )                                                         \
         {                                                           \
+          SPRITE_COUNT_REWRITE                                      \
           redex->~Node(); /* optimized away if no dtor */           \
           new(redex) TgtType(BOOST_PP_ENUM_PARAMS(n,a));            \
           trace();                                                  \
@@ -343,6 +345,7 @@ namespace sprite
       , typename enable_if<is_integral<ArgType> >::type* =0
       )
     {
+      SPRITE_COUNT_REWRITE
       g_redex->~Node(); // optimized away if no dtor
       new(g_redex) TgtType(value);
       trace();
@@ -356,6 +359,7 @@ namespace sprite
       , typename enable_if<is_integral<ArgType> >::type* =0
       )
     {
+      SPRITE_COUNT_REWRITE
       redex->~Node(); // optimized away if no dtor
       new(redex) TgtType(value);
       trace();

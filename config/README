@@ -76,3 +76,7 @@ options to the compiler.  They are:
       Places the head of the node free list into a normal variable rather than
       a dedicated register.
 
+  SPRITE_INSTRUMENT_STEPCOUNTERS
+      Counts and reports the number of rewrite steps, node allocations, and
+      pattern matches.  Severely degrades performance.
+

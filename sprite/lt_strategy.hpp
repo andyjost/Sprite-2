@@ -48,6 +48,7 @@
 #define GENERATE_NH_METHOD(NH,dtree)                          \
     virtual void NH()                                         \
     {                                                         \
+      SPRITE_COUNT_PATTERN_MATCH                              \
       EXPR_IF_BRANCH(Node * inductive;, dtree)                \
       DEFINITIONAL_TREE(BRANCH_DEF, NOTHING, dtree)           \
       DEFINITIONAL_TREE(BRANCH_EXEC, LEAF_EXEC##_##NH, dtree) \

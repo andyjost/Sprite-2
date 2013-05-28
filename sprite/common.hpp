@@ -58,6 +58,17 @@
 #  endif
 #endif
 
+// Set variables related to step-counting instrumentation.
+#ifdef SPRITE_INSTRUMENT_STEPCOUNTERS
+#  define SPRITE_COUNT_REWRITE sprite::g_stepcnt[sprite::N_REWRITE]++;
+#  define SPRITE_COUNT_ALLOC sprite::g_stepcnt[sprite::N_ALLOC]++;
+#  define SPRITE_COUNT_PATTERN_MATCH sprite::g_stepcnt[sprite::N_PATTERN_MATCH]++;
+#else
+#  define SPRITE_COUNT_REWRITE
+#  define SPRITE_COUNT_ALLOC
+#  define SPRITE_COUNT_PATTERN_MATCH
+#endif
+
 // Global register variables must come before all function defs.
 namespace sprite
 {
@@ -98,6 +109,10 @@ namespace sprite
   register void * g_free_list asm ("r12");
   #endif
 
+  #ifdef SPRITE_INSTRUMENT_STEPCOUNTERS
+  enum CounterLabels { N_REWRITE = 0, N_ALLOC = 1, N_PATTERN_MATCH = 2 };
+  extern unsigned long long g_stepcnt[3];
+  #endif
 
   // In instance of this object must be added as the very first line of main, to perfom
   // system initialization and shutdown.

@@ -61,6 +61,7 @@
     /* Define the function to handle this branch in the DTree. */           \
     static void IDENTIFIER(dt,A0,)()                                        \
     {                                                                       \
+      SPRITE_COUNT_PATTERN_MATCH                                            \
       typedef A0_CTORNAME(A0) inductive_type;                               \
       static procedure vtable[] = { &fail, &fwd, &choice, &oper             \
           REPEAT(A0)(VA_LEN(__VA_ARGS__),BRANCH_I,A0)                       \

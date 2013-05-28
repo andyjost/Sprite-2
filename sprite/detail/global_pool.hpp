@@ -161,6 +161,7 @@ namespace boost {
       // pre: !empty()
       void * malloc BOOST_PREVENT_MACRO_SUBSTITUTION()
       {
+        SPRITE_COUNT_ALLOC
         void * const ret = sprite::g_free_list;
   
         // Increment the "sprite::g_free_list" pointer to point to the next chunk
